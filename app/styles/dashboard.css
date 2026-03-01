@@ -383,6 +383,7 @@ tbody tr:hover {
   background: #f9f9f9;
   border-radius: 8px;
   border-left: 3px solid #6a11cb;
+  color: black;
 }
 
 /* Attendance Info */

@@ -105,12 +105,12 @@ export default function Dashboard() {
         setAttendance(getAttendanceData);
         // Check clock status
         const today = new Date().toDateString();
-        const todayRecord = getAttendanceData.find(
-          (a) => new Date(a.date).toDateString() === today,
-        );
-        if (todayRecord?.clockOut) {
+        const todayRecord = getAttendanceData.filter(
+          (a) => new Date(a.eventTime).toDateString() === today,
+        )[0];
+        if (todayRecord?.eventType === "CLOCK_OUT") {
           setClockStatus("clocked-out");
-        } else if (todayRecord?.clockIn) {
+        } else if (todayRecord?.eventType === "CLOCK_IN") {
           setClockStatus("clocked-in");
         }
       }

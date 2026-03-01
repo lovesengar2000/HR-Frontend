@@ -5,26 +5,26 @@ import { useRouter } from "next/navigation";
 import Navbar from "../../../components/Navbar";
 import "../../styles/dashboard.css";
 
-export default function AttendancePage() {
+export default function LeavePage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [employee, setEmployee] = useState(null);
-  const [attendance, setAttendance] = useState([]);
+  const [leaves, setLeaves] = useState([]);
+  const [leaveBalance, setLeaveBalance] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalDays: 0,
-    presentDays: 0,
-    absentDays: 0,
-    leaveDays: 0,
-    totalHours: 0,
-    averageHours: 0,
-  });
+  const [selectedLeaveType, setSelectedLeaveType] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [reason, setReason] = useState("");
+  const [applying, setApplying] = useState(false);
+  const [message, setMessage] = useState("");
+  const [filter, setFilter] = useState("all"); // all, accepted, rejected, pending
 
   useEffect(() => {
-    loadAttendanceData();
+    loadLeaveData();
   }, []);
 
-  const loadAttendanceData = async () => {
+  const loadLeaveData = async () => {
     setLoading(true);
     try {
       const userdata = await fetch("/api/users/getData", {
@@ -42,66 +42,100 @@ export default function AttendancePage() {
         setEmployee(userDataJson.Employee);
       }
 
-      // Load attendance
-      const GetAttendance = await fetch(
-        `/api/users/attendance?userId=${userId}&companyId=${companyId}`,
+      // Load leave types
+      const LeaveData = await fetch(
+        `/api/users/leaves/leaveTypes?userId=${userId}&companyId=${companyId}`,
         {
           method: "GET",
           credentials: "include",
         }
       );
+      const leavesData = await LeaveData.json();
+      if (LeaveData.status === 200) {
+        setLeaves(leavesData);
+        if (Object.keys(leavesData).length > 0) {
+          const firstKey = Object.keys(leavesData)[0];
+          setSelectedLeaveType(leavesData[firstKey].leaveTypeId);
+        }
+      }
 
-      const attendanceData = await GetAttendance.json();
-      if (GetAttendance.status === 200) {
-        setAttendance(attendanceData);
-        calculateStats(attendanceData);
+      // Load leave balance (past applications)
+      const LeaveBalanceData = await fetch(
+        `/api/users/leaves/leaveBalance?userId=${userId}&companyId=${companyId}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+      const leaveBalanceData = await LeaveBalanceData.json();
+      if (LeaveBalanceData.status === 200) {
+        setLeaveBalance(leaveBalanceData);
       }
     } catch (error) {
-      console.error("Error loading attendance:", error);
+      console.error("Error loading leave data:", error);
+      setMessage("Failed to load leave data");
     } finally {
       setLoading(false);
     }
   };
 
-  const calculateStats = (attendanceRecords) => {
-    let totalHours = 0;
-    let presentDays = 0;
-    let absentDays = 0;
-    let leaveDays = 0;
+  const handleApplyLeave = async (e) => {
+    e.preventDefault();
 
-    attendanceRecords.forEach((record) => {
-      if (record.clockIn && record.clockOut) {
-        const clockInTime = new Date(record.clockIn);
-        const clockOutTime = new Date(record.clockOut);
-        const hours =
-          (clockOutTime - clockInTime) / (1000 * 60 * 60);
-        totalHours += hours;
-        presentDays++;
-      } else if (record.status === "leave") {
-        leaveDays++;
-      } else if (record.status === "absent") {
-        absentDays++;
+    if (!selectedLeaveType || !startDate || !endDate || !reason) {
+      setMessage("Please fill in all fields");
+      return;
+    }
+
+    setApplying(true);
+    try {
+      const response = await fetch("/api/users/leaves/applyLeave", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          leaveTypeId: selectedLeaveType,
+          startDate,
+          endDate,
+          reason,
+        }),
+      });
+
+      if (response.status === 200) {
+        setMessage("Leave applied successfully!");
+        setSelectedLeaveType("");
+        setStartDate("");
+        setEndDate("");
+        setReason("");
+        setTimeout(() => {
+          loadLeaveData();
+          setMessage("");
+        }, 2000);
+      } else {
+        setMessage("Failed to apply leave");
       }
-    });
-
-    setStats({
-      totalDays: attendanceRecords.length,
-      presentDays,
-      absentDays,
-      leaveDays,
-      totalHours: totalHours.toFixed(2),
-      averageHours: (totalHours / (presentDays || 1)).toFixed(2),
-    });
+    } catch (error) {
+      console.error("Error applying leave:", error);
+      setMessage("Error applying leave: " + error.message);
+    } finally {
+      setApplying(false);
+    }
   };
 
-  const getHoursWorked = (record) => {
-    if (record.clockIn && record.clockOut) {
-      const clockInTime = new Date(record.clockIn);
-      const clockOutTime = new Date(record.clockOut);
-      const hours = (clockOutTime - clockInTime) / (1000 * 60 * 60);
-      return hours.toFixed(2);
-    }
-    return "0";
+  const getFilteredLeaves = () => {
+    if (filter === "all") return leaveBalance;
+    return leaveBalance.filter(
+      (leave) => leave.status?.toLowerCase() === filter
+    );
+  };
+
+  const getLeaveTypeName = (leaveTypeId) => {
+    const leaveType = Object.values(leaves).find(
+      (l) => l.leaveTypeId === leaveTypeId
+    );
+    return leaveType ? leaveType.name : "Unknown";
   };
 
   if (loading) {
@@ -146,95 +180,163 @@ export default function AttendancePage() {
 
         <main className="dashboard-container">
           <div className="welcome-section">
-            <h1>My Attendance</h1>
-            <p>View your attendance history and work hours</p>
+            <h1>Leave Management</h1>
+            <p>Apply for leave and view your leave history</p>
           </div>
 
-          {/* Statistics Cards */}
-          <div className="stats-container">
-            <div className="stat-card">
-              <h4>Total Days</h4>
-              <div className="stat-number">{stats.totalDays}</div>
-            </div>
-            <div className="stat-card">
-              <h4>Present Days</h4>
-              <div className="stat-number" style={{ color: "#00d084" }}>
-                {stats.presentDays}
+          {message && <div className="alert">{message}</div>}
+
+          {/* Apply Leave Card */}
+          <div className="card">
+            <h3>Apply for Leave</h3>
+            <form onSubmit={handleApplyLeave} className="leave-form">
+              <div className="form-group">
+                <label>Leave Type</label>
+                <select
+                  value={selectedLeaveType}
+                  onChange={(e) => setSelectedLeaveType(e.target.value)}
+                  className="form-input"
+                >
+                  <option value="">Select Leave Type</option>
+                  {Object.entries(leaves).map(([key, value]) => (
+                    <option key={value.leaveTypeId} value={value.leaveTypeId}>
+                      {value.name} ({value.maxDaysPerYear - (leaveBalance.filter(l => l.leaveTypeId === value.leaveTypeId).length || 0)} days available)
+                    </option>
+                  ))}
+                </select>
               </div>
-            </div>
-            <div className="stat-card">
-              <h4>Absent Days</h4>
-              <div className="stat-number" style={{ color: "#ff6b6b" }}>
-                {stats.absentDays}
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Start Date</label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>End Date</label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
               </div>
-            </div>
-            <div className="stat-card">
-              <h4>Leave Days</h4>
-              <div className="stat-number" style={{ color: "#ffc300" }}>
-                {stats.leaveDays}
+
+              <div className="form-group">
+                <label>Reason</label>
+                <textarea
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  className="form-input"
+                  rows="3"
+                  placeholder="Enter reason for leave"
+                ></textarea>
               </div>
-            </div>
-            <div className="stat-card">
-              <h4>Total Hours</h4>
-              <div className="stat-number">{stats.totalHours}h</div>
-            </div>
-            <div className="stat-card">
-              <h4>Average Hours/Day</h4>
-              <div className="stat-number">{stats.averageHours}h</div>
-            </div>
+
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={applying}
+              >
+                {applying ? "Applying..." : "Apply Leave"}
+              </button>
+            </form>
           </div>
 
-          {/* Attendance Records Table */}
+          {/* Leave History Card */}
           <div className="card full-width">
-            <h3>Attendance Records</h3>
-            {attendance.length > 0 ? (
+            <h3>Leave History</h3>
+
+            <div className="filter-buttons">
+              <button
+                className={`filter-btn ${filter === "all" ? "active" : ""}`}
+                onClick={() => setFilter("all")}
+              >
+                All ({leaveBalance.length})
+              </button>
+              <button
+                className={`filter-btn ${filter === "accepted" ? "active" : ""}`}
+                onClick={() => setFilter("accepted")}
+              >
+                Accepted (
+                {leaveBalance.filter(
+                  (l) => l.status?.toLowerCase() === "accepted"
+                ).length}
+                )
+              </button>
+              <button
+                className={`filter-btn ${filter === "rejected" ? "active" : ""}`}
+                onClick={() => setFilter("rejected")}
+              >
+                Rejected (
+                {leaveBalance.filter(
+                  (l) => l.status?.toLowerCase() === "rejected"
+                ).length}
+                )
+              </button>
+              <button
+                className={`filter-btn ${filter === "pending" ? "active" : ""}`}
+                onClick={() => setFilter("pending")}
+              >
+                Pending (
+                {leaveBalance.filter(
+                  (l) => l.status?.toLowerCase() === "pending"
+                ).length}
+                )
+              </button>
+            </div>
+
+            {getFilteredLeaves().length > 0 ? (
               <div className="table-container">
                 <table>
                   <thead>
                     <tr>
-                      <th>Date</th>
-                      <th>Clock In</th>
-                      <th>Clock Out</th>
-                      <th>Hours Worked</th>
+                      <th>Leave Type</th>
+                      <th>From</th>
+                      <th>To</th>
+                      <th>Days</th>
+                      <th>Reason</th>
                       <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {attendance
+                    {getFilteredLeaves()
                       .slice()
                       .reverse()
-                      .map((record, index) => (
-                        <tr key={index}>
-                          <td>
-                            {new Date(record.date).toLocaleDateString()}
-                          </td>
-                          <td>
-                            {record.clockIn
-                              ? new Date(record.clockIn).toLocaleTimeString()
-                              : "-"}
-                          </td>
-                          <td>
-                            {record.clockOut
-                              ? new Date(record.clockOut).toLocaleTimeString()
-                              : "-"}
-                          </td>
-                          <td>{getHoursWorked(record)} hrs</td>
-                          <td>
-                            <span
-                              className={`status status-${
-                                record.status?.toLowerCase() || "present"
-                              }`}
-                            >
-                              {record.status || "Present"}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                      .map((leave) => {
+                        const startDate = new Date(leave.startDate);
+                        const endDate = new Date(leave.endDate);
+                        const days = Math.ceil(
+                          (endDate - startDate) / (1000 * 60 * 60 * 24)
+                        ) + 1;
+
+                        return (
+                          <tr key={leave.leaveRequestId}>
+                            <td>{getLeaveTypeName(leave.leaveTypeId)}</td>
+                            <td>{startDate.toLocaleDateString()}</td>
+                            <td>{endDate.toLocaleDateString()}</td>
+                            <td>{days}</td>
+                            <td>{leave.reason}</td>
+                            <td>
+                              <span
+                                className={`status status-${leave.status?.toLowerCase()}`}
+                              >
+                                {leave.status}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
             ) : (
-              <p className="no-data">No attendance records found</p>
+              <p className="no-data">No leave records found</p>
             )}
           </div>
         </main>

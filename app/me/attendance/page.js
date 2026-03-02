@@ -9,6 +9,7 @@ export default function AttendancePage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [employee, setEmployee] = useState(null);
+  const [workingDays, setWorkingDays] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -44,15 +45,16 @@ export default function AttendancePage() {
 
       // Load attendance
       const GetAttendance = await fetch(
-        `/api/users/attendance?userId=${userId}&companyId=${companyId}`,
+        `/api/users/attendance?employeeId=${userDataJson.Employee.employeeId}&companyId=${companyId}`,
         {
           method: "GET",
           credentials: "include",
-        }
+        },
       );
 
       const attendanceData = await GetAttendance.json();
       if (GetAttendance.status === 200) {
+        console.log("Attendance Data:", attendanceData);
         setAttendance(attendanceData);
         calculateStats(attendanceData);
       }
@@ -69,23 +71,82 @@ export default function AttendancePage() {
     let absentDays = 0;
     let leaveDays = 0;
 
-    attendanceRecords.forEach((record) => {
-      if (record.clockIn && record.clockOut) {
-        const clockInTime = new Date(record.clockIn);
-        const clockOutTime = new Date(record.clockOut);
-        const hours =
-          (clockOutTime - clockInTime) / (1000 * 60 * 60);
-        totalHours += hours;
-        presentDays++;
-      } else if (record.status === "leave") {
-        leaveDays++;
-      } else if (record.status === "absent") {
-        absentDays++;
-      }
-    });
+    let clockInTime;
+    let clockOutTime;
 
+    let AllWorkingDays = [];
+    let currentDate = new Date();
+    console.log("Calculating stats with records:", attendanceRecords);
+    attendanceRecords
+      .filter(
+        (rec) =>
+         (currentDate - new Date(rec.eventTime)) / (1000 * 3600) <
+          24 * 7,
+      )
+      .sort((a, b) =>  new Date(a.eventTime) - new Date(b.eventTime) )
+      .forEach((record) => {
+        // console.log("Processing record:", clockInTime, clockOutTime, record);
+        if (record.eventType === "CLOCK_IN") {
+          if(clockInTime){
+            AllWorkingDays.push({
+            date: clockInTime.toDateString(),
+            intime: clockInTime.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            outtime: "-",
+            hours: "-",
+          });
+          }
+          clockInTime = new Date(record.eventTime);
+        }
+        if (record.eventType === "CLOCK_OUT") {
+          clockOutTime = new Date(record.eventTime);
+        }
+        if (clockInTime && clockOutTime) {
+          if(!(AllWorkingDays.some((rec) => rec.date === clockInTime.toDateString()))) {
+            presentDays++;
+          }
+          const hours = (clockOutTime - clockInTime) / (1000 * 60 * 60);
+          totalHours += hours;
+          AllWorkingDays.push({
+            date: clockInTime.toDateString(),
+            intime: clockInTime.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            outtime: clockOutTime.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            hours:hours.toFixed(2),
+          });
+         
+          // console.log(`Clocked in at ${clockInTime}, clocked out at ${clockOutTime}, hours worked: ${hours.toFixed(2)}`);
+          clockInTime = null;
+          clockOutTime = null;
+        } else if (record.status === "leave") {
+          leaveDays++;
+        } else if (record.status === "absent") {
+          absentDays++;
+        }
+      });
+      if(clockInTime){
+            AllWorkingDays.push({
+            date: clockInTime.toDateString(),
+            intime: clockInTime.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            outtime: "-",
+            hours: "-",
+          });
+          }
+      
+    setWorkingDays(AllWorkingDays);
+   
     setStats({
-      totalDays: attendanceRecords.length,
+      totalDays:  presentDays + absentDays + leaveDays,
       presentDays,
       absentDays,
       leaveDays,
@@ -162,12 +223,12 @@ export default function AttendancePage() {
                 {stats.presentDays}
               </div>
             </div>
-            <div className="stat-card">
+            {/* <div className="stat-card">
               <h4>Absent Days</h4>
               <div className="stat-number" style={{ color: "#ff6b6b" }}>
                 {stats.absentDays}
               </div>
-            </div>
+            </div> */}
             <div className="stat-card">
               <h4>Leave Days</h4>
               <div className="stat-number" style={{ color: "#ffc300" }}>
@@ -187,7 +248,7 @@ export default function AttendancePage() {
           {/* Attendance Records Table */}
           <div className="card full-width">
             <h3>Attendance Records</h3>
-            {attendance.length > 0 ? (
+            {workingDays.length > 0 ? (
               <div className="table-container">
                 <table>
                   <thead>
@@ -200,25 +261,15 @@ export default function AttendancePage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {attendance
+                    {workingDays
                       .slice()
                       .reverse()
                       .map((record, index) => (
                         <tr key={index}>
-                          <td>
-                            {new Date(record.date).toLocaleDateString()}
-                          </td>
-                          <td>
-                            {record.clockIn
-                              ? new Date(record.clockIn).toLocaleTimeString()
-                              : "-"}
-                          </td>
-                          <td>
-                            {record.clockOut
-                              ? new Date(record.clockOut).toLocaleTimeString()
-                              : "-"}
-                          </td>
-                          <td>{getHoursWorked(record)} hrs</td>
+                          <td>{record.date}</td>
+                          <td>{record.intime }</td>
+                          <td>{record.outtime }</td>
+                          <td>{(record.outtime !== "-" && record.intime !== "-") ? `${(record.hours - (record.hours % 1))}H:${Math.round((record.hours % 1) * 60)}M` : "-"}</td>
                           <td>
                             <span
                               className={`status status-${

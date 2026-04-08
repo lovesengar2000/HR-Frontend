@@ -67,7 +67,7 @@ export default function ExpensePage() {
       }
 
       const expRes = await fetch(
-        `/api/users/expenses?employeeId=${data.Employee.employeeId}&companyId=${data.user.companyId}`,
+        `/api/users/expenses?employeeId=${data.employee.employeeId}&companyId=${data.user.companyId}`,
         { method: "GET", credentials: "include" }
       );
       if (expRes.status === 200) {

@@ -93,11 +93,11 @@ export default function AttendancePage() {
 
       if (userdata.status === 200) {
         setUser(userDataJson.user);
-        setEmployee(userDataJson.Employee);
+        setEmployee(userDataJson.employee);
       }
 
       const GetAttendance = await fetch(
-        `/api/users/attendance?employeeId=${userDataJson.Employee.employeeId}&companyId=${companyId}`,
+        `/api/users/attendance?employeeId=${userDataJson.employee.employeeId}&companyId=${companyId}`,
         { method: "GET", credentials: "include" }
       );
       const attendanceData = await GetAttendance.json();

@@ -36,9 +36,9 @@ export default function Dashboard() {
       const companyId = userDataJson.user.companyId;
 
       if (userdata.status === 200) {
-        setRole(userDataJson.roles);
+        setRole(userDataJson.role);
         setUser(userDataJson.user);
-        setEmployee(userDataJson.Employee);
+        setEmployee(userDataJson.employee);
       }
 
       const LeaveData = await fetch(
@@ -55,9 +55,9 @@ export default function Dashboard() {
       const leaveBalanceData = await LeaveBalanceData.json();
       if (LeaveBalanceData.status === 200) setLeaveBalance(leaveBalanceData);
 
-      if (userDataJson.Employee?.employeeId) {
+      if (userDataJson.employee?.employeeId) {
         const GetAttendance = await fetch(
-          `/api/users/attendance?companyId=${companyId}&employeeId=${userDataJson.Employee.employeeId}`,
+          `/api/users/attendance?companyId=${companyId}&employeeId=${userDataJson.employee.employeeId}`,
           { method: "GET", credentials: "include" }
         );
         const getAttendanceData = await GetAttendance.json();

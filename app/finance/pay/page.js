@@ -36,10 +36,10 @@ export default function MyPayPage() {
       const res  = await fetch("/api/users/getData", { method: "GET", credentials: "include" });
       const raw  = await res.json();
       const data = JSON.parse(raw);
-      if (res.status === 200) { setUser(data.user); setEmployee(data.Employee); }
+      if (res.status === 200) { setUser(data.user); setEmployee(data.employee); }
 
       const payRes = await fetch(
-        `/api/finance/payslips?employeeId=${data.Employee.employeeId}&companyId=${data.user.companyId}`,
+        `/api/finance/payslips?employeeId=${data.employee.employeeId}&companyId=${data.user.companyId}`,
         { method: "GET", credentials: "include" }
       );
       if (payRes.status === 200) {

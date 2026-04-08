@@ -142,6 +142,17 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* Asset Management */}
+        <div className="card full-width">
+          <h3>Asset Management</h3>
+          <p style={{ color: '#8d9ab5', marginBottom: '1rem', fontSize: '0.875rem' }}>
+            Review pending asset requests and process employee returns.
+          </p>
+          <button className="btn btn-primary" onClick={() => router.push('/admin/assets')}>
+            Manage Assets →
+          </button>
+        </div>
+
         {/* Leave Requests */}
         {leaves.length > 0 && (
           <div className="card full-width">

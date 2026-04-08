@@ -53,10 +53,10 @@ export default function ManageTaxPage() {
       const res  = await fetch("/api/users/getData", { method: "GET", credentials: "include" });
       const raw  = await res.json();
       const data = JSON.parse(raw);
-      if (res.status === 200) { setUser(data.user); setEmployee(data.Employee); }
+      if (res.status === 200) { setUser(data.user); setEmployee(data.employee); }
 
       const taxRes = await fetch(
-        `/api/finance/tax?employeeId=${data.Employee.employeeId}&companyId=${data.user.companyId}`,
+        `/api/finance/tax?employeeId=${data.employee.employeeId}&companyId=${data.user.companyId}`,
         { method: "GET", credentials: "include" }
       );
       if (taxRes.status === 200) {

@@ -55,6 +55,12 @@ export default function Sidebar({ activePath = '' }) {
                 >
                   Expense & Travel
                 </li>
+                <li
+                  className={`sidebar-subitem ${activePath === '/assets' ? 'active' : ''}`}
+                  onClick={() => router.push('/assets')}
+                >
+                  Assets
+                </li>
               </ul>
             )}
           </li>

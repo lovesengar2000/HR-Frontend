@@ -55,11 +55,11 @@ export default function FinanceSummaryPage() {
 
       if (res.status === 200) {
         setUser(data.user);
-        setEmployee(data.Employee);
+        setEmployee(data.employee);
       }
 
       const finRes = await fetch(
-        `/api/finance/profile?employeeId=${data.Employee.employeeId}&companyId=${data.user.companyId}`,
+        `/api/finance/profile?employeeId=${data.employee.employeeId}&companyId=${data.user.companyId}`,
         { method: "GET", credentials: "include" }
       );
       if (finRes.status === 200) {

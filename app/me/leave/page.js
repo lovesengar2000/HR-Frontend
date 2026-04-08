@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "../../../components/Navbar";
+import Sidebar from "../../../components/Sidebar";
 import "../../styles/dashboard.css";
 
 export default function LeavePage() {
@@ -17,8 +18,8 @@ export default function LeavePage() {
   const [endDate, setEndDate] = useState("");
   const [reason, setReason] = useState("");
   const [applying, setApplying] = useState(false);
-  const [message, setMessage] = useState("");
-  const [filter, setFilter] = useState("all"); // all, accepted, rejected, pending
+  const [message, setMessage] = useState({ text: "", type: "" });
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     loadLeaveData();
@@ -42,30 +43,21 @@ export default function LeavePage() {
         setEmployee(userDataJson.Employee);
       }
 
-      // Load leave types
       const LeaveData = await fetch(
         `/api/users/leaves/leaveTypes?userId=${userId}&companyId=${companyId}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
+        { method: "GET", credentials: "include" }
       );
       const leavesData = await LeaveData.json();
       if (LeaveData.status === 200) {
         setLeaves(leavesData);
         if (Object.keys(leavesData).length > 0) {
-          const firstKey = Object.keys(leavesData)[0];
-          setSelectedLeaveType(leavesData[firstKey].leaveTypeId);
+          setSelectedLeaveType(Object.values(leavesData)[0].leaveTypeId);
         }
       }
 
-      // Load leave balance (past applications)
       const LeaveBalanceData = await fetch(
         `/api/users/leaves/leaveBalance?userId=${userId}&companyId=${companyId}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
+        { method: "GET", credentials: "include" }
       );
       const leaveBalanceData = await LeaveBalanceData.json();
       if (LeaveBalanceData.status === 200) {
@@ -73,7 +65,7 @@ export default function LeavePage() {
       }
     } catch (error) {
       console.error("Error loading leave data:", error);
-      setMessage("Failed to load leave data");
+      setMessage({ text: "Failed to load leave data", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -81,9 +73,8 @@ export default function LeavePage() {
 
   const handleApplyLeave = async (e) => {
     e.preventDefault();
-
     if (!selectedLeaveType || !startDate || !endDate || !reason) {
-      setMessage("Please fill in all fields");
+      setMessage({ text: "Please fill in all fields", type: "error" });
       return;
     }
 
@@ -92,33 +83,24 @@ export default function LeavePage() {
       const response = await fetch("/api/users/leaves/applyLeave", {
         method: "POST",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          leaveTypeId: selectedLeaveType,
-          startDate,
-          endDate,
-          reason,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leaveTypeId: selectedLeaveType, startDate, endDate, reason }),
       });
 
       if (response.status === 200) {
-        setMessage("Leave applied successfully!");
-        setSelectedLeaveType("");
+        setMessage({ text: "Leave applied successfully!", type: "success" });
         setStartDate("");
         setEndDate("");
         setReason("");
         setTimeout(() => {
           loadLeaveData();
-          setMessage("");
+          setMessage({ text: "", type: "" });
         }, 2000);
       } else {
-        setMessage("Failed to apply leave");
+        setMessage({ text: "Failed to apply leave", type: "error" });
       }
     } catch (error) {
-      console.error("Error applying leave:", error);
-      setMessage("Error applying leave: " + error.message);
+      setMessage({ text: "Error: " + error.message, type: "error" });
     } finally {
       setApplying(false);
     }
@@ -126,218 +108,202 @@ export default function LeavePage() {
 
   const getFilteredLeaves = () => {
     if (filter === "all") return leaveBalance;
-    return leaveBalance.filter(
-      (leave) => leave.status?.toLowerCase() === filter
-    );
+    return leaveBalance.filter((l) => l.status?.toLowerCase() === filter);
   };
 
   const getLeaveTypeName = (leaveTypeId) => {
-    const leaveType = Object.values(leaves).find(
-      (l) => l.leaveTypeId === leaveTypeId
-    );
-    return leaveType ? leaveType.name : "Unknown";
+    return Object.values(leaves).find((l) => l.leaveTypeId === leaveTypeId)?.name || "—";
+  };
+
+  const countByStatus = (status) =>
+    leaveBalance.filter((l) => l.status?.toLowerCase() === status).length;
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } catch {}
+    router.push("/");
   };
 
   if (loading) {
     return (
-      <div>
-        <Navbar onLogout={() => router.push("/")} />
-        <div className="loading">
-          <div className="spinner"></div>
+      <div className="app-shell">
+        <Navbar onLogout={handleLogout} />
+        <div className="app-body">
+          <Sidebar activePath="/me/leave" />
+          <main className="main-content">
+            <div className="loading"><div className="spinner"></div></div>
+          </main>
         </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <Navbar onLogout={() => router.push("/")} />
-      <div className="dashboard-layout">
-        <aside className="sidebar">
-          <div className="sidebar-brand">keka</div>
-          <ul className="sidebar-menu">
-            <li onClick={() => router.push("/dashboard")}>Home</li>
-            <li className="menu-item-with-submenu">
-              <div className="menu-item-header">
-                Me
-                <span className="arrow">›</span>
-              </div>
-              <ul className="submenu">
-                <li onClick={() => router.push("/me/attendance")}>
-                  Attendance
-                </li>
-                <li onClick={() => router.push("/me/leave")}>Leave</li>
-              </ul>
-            </li>
-            <li>Inbox</li>
-            <li>My Team</li>
-            <li>My Finances</li>
-            <li>Org</li>
-            <li>Engage</li>
-            <li>Performance</li>
-          </ul>
-        </aside>
+    <div className="app-shell">
+      <Navbar
+        onLogout={handleLogout}
+        userName={employee?.name || user?.email}
+        userInitial={(employee?.name || user?.email || "U")[0].toUpperCase()}
+      />
+      <div className="app-body">
+        <Sidebar activePath="/me/leave" />
 
-        <main className="dashboard-container">
-          <div className="welcome-section">
-            <h1>Leave Management</h1>
-            <p>Apply for leave and view your leave history</p>
+        <main className="main-content">
+          <div className="page-header">
+            <div>
+              <h1 className="page-title">Leave Management</h1>
+              <p className="page-subtitle">Apply for leave and track your requests</p>
+            </div>
           </div>
 
-          {message && <div className="alert">{message}</div>}
+          {message.text && (
+            <div className={`alert ${message.type === "error" ? "alert-error" : "alert-success"}`}>
+              {message.text}
+            </div>
+          )}
 
-          {/* Apply Leave Card */}
-          <div className="card">
-            <h3>Apply for Leave</h3>
-            <form onSubmit={handleApplyLeave} className="leave-form">
-              <div className="form-group">
-                <label>Leave Type</label>
-                <select
-                  value={selectedLeaveType}
-                  onChange={(e) => setSelectedLeaveType(e.target.value)}
-                  className="form-input"
-                >
-                  <option value="">Select Leave Type</option>
-                  {Object.entries(leaves).map(([key, value]) => (
-                    <option key={value.leaveTypeId} value={value.leaveTypeId}>
-                      {value.name} ({value.maxDaysPerYear - (leaveBalance.filter(l => l.leaveTypeId === value.leaveTypeId).length || 0)} days available)
-                    </option>
-                  ))}
-                </select>
+          {/* Leave Balance Summary */}
+          {Object.keys(leaves).length > 0 && (
+            <div className="leave-quota-row">
+              {Object.entries(leaves).map(([, value]) => {
+                const used = leaveBalance.filter(
+                  (t) => t.leaveTypeId === value.leaveTypeId
+                ).length;
+                const available = value.maxDaysPerYear - used;
+                return (
+                  <div key={value.leaveTypeId} className="leave-quota-card">
+                    <span className="leave-quota-type">{value.name}</span>
+                    <span className="leave-quota-available">{available}</span>
+                    <span className="leave-quota-label">of {value.maxDaysPerYear} available</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="leave-main-grid">
+            {/* Apply Leave Form */}
+            <div className="HRM-card">
+              <div className="HRM-card-header">
+                <span className="HRM-card-title">Apply for Leave</span>
               </div>
-
-              <div className="form-row">
+              <form onSubmit={handleApplyLeave} className="leave-form">
                 <div className="form-group">
-                  <label>Start Date</label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="form-input"
+                  <label className="form-label">Leave Type</label>
+                  <select
+                    value={selectedLeaveType}
+                    onChange={(e) => setSelectedLeaveType(e.target.value)}
+                    className="form-control"
+                  >
+                    <option value="">Select leave type</option>
+                    {Object.entries(leaves).map(([, value]) => {
+                      const used = leaveBalance.filter(
+                        (t) => t.leaveTypeId === value.leaveTypeId
+                      ).length;
+                      const available = value.maxDaysPerYear - used;
+                      return (
+                        <option key={value.leaveTypeId} value={value.leaveTypeId}>
+                          {value.name} ({available} days left)
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                <div className="form-row-2">
+                  <div className="form-group">
+                    <label className="form-label">Start Date</label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="form-control"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">End Date</label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="form-control"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Reason</label>
+                  <textarea
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    className="form-control"
+                    rows="3"
+                    placeholder="Briefly describe the reason for leave"
                   />
                 </div>
-                <div className="form-group">
-                  <label>End Date</label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-              </div>
 
-              <div className="form-group">
-                <label>Reason</label>
-                <textarea
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  className="form-input"
-                  rows="3"
-                  placeholder="Enter reason for leave"
-                ></textarea>
-              </div>
-
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={applying}
-              >
-                {applying ? "Applying..." : "Apply Leave"}
-              </button>
-            </form>
-          </div>
-
-          {/* Leave History Card */}
-          <div className="card full-width">
-            <h3>Leave History</h3>
-
-            <div className="filter-buttons">
-              <button
-                className={`filter-btn ${filter === "all" ? "active" : ""}`}
-                onClick={() => setFilter("all")}
-              >
-                All ({leaveBalance.length})
-              </button>
-              <button
-                className={`filter-btn ${filter === "accepted" ? "active" : ""}`}
-                onClick={() => setFilter("accepted")}
-              >
-                Accepted (
-                {leaveBalance.filter(
-                  (l) => l.status?.toLowerCase() === "accepted"
-                ).length}
-                )
-              </button>
-              <button
-                className={`filter-btn ${filter === "rejected" ? "active" : ""}`}
-                onClick={() => setFilter("rejected")}
-              >
-                Rejected (
-                {leaveBalance.filter(
-                  (l) => l.status?.toLowerCase() === "rejected"
-                ).length}
-                )
-              </button>
-              <button
-                className={`filter-btn ${filter === "pending" ? "active" : ""}`}
-                onClick={() => setFilter("pending")}
-              >
-                Pending (
-                {leaveBalance.filter(
-                  (l) => l.status?.toLowerCase() === "pending"
-                ).length}
-                )
-              </button>
+                <button type="submit" className="btn btn-primary" disabled={applying}>
+                  {applying ? "Submitting..." : "Submit Request"}
+                </button>
+              </form>
             </div>
 
-            {getFilteredLeaves().length > 0 ? (
-              <div className="table-container">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Leave Type</th>
-                      <th>From</th>
-                      <th>To</th>
-                      <th>Days</th>
-                      <th>Reason</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {getFilteredLeaves()
-                      .slice()
-                      .reverse()
-                      .map((leave) => {
-                        const startDate = new Date(leave.startDate);
-                        const endDate = new Date(leave.endDate);
-                        const days = Math.ceil(
-                          (endDate - startDate) / (1000 * 60 * 60 * 24)
-                        ) + 1;
-
-                        return (
-                          <tr key={leave.leaveRequestId}>
-                            <td>{getLeaveTypeName(leave.leaveTypeId)}</td>
-                            <td>{startDate.toLocaleDateString()}</td>
-                            <td>{endDate.toLocaleDateString()}</td>
-                            <td>{days}</td>
-                            <td>{leave.reason}</td>
-                            <td>
-                              <span
-                                className={`status status-${leave.status?.toLowerCase()}`}
-                              >
-                                {leave.status}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </table>
+            {/* Leave History */}
+            <div className="HRM-card">
+              <div className="HRM-card-header">
+                <span className="HRM-card-title">Leave History</span>
               </div>
-            ) : (
-              <p className="no-data">No leave records found</p>
-            )}
+
+              <div className="filter-tabs">
+                {[
+                  { key: "all", label: "All", count: leaveBalance.length },
+                  { key: "accepted", label: "Approved", count: countByStatus("accepted") },
+                  { key: "pending", label: "Pending", count: countByStatus("pending") },
+                  { key: "rejected", label: "Rejected", count: countByStatus("rejected") },
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    className={`filter-tab ${filter === tab.key ? "active" : ""}`}
+                    onClick={() => setFilter(tab.key)}
+                  >
+                    {tab.label}
+                    <span className="filter-tab-count">{tab.count}</span>
+                  </button>
+                ))}
+              </div>
+
+              {getFilteredLeaves().length > 0 ? (
+                <div className="leave-history-list">
+                  {getFilteredLeaves()
+                    .slice()
+                    .reverse()
+                    .map((leave) => {
+                      const start = new Date(leave.startDate);
+                      const end = new Date(leave.endDate);
+                      const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                      return (
+                        <div key={leave.leaveRequestId} className="leave-history-item">
+                          <div className="leave-history-info">
+                            <span className="leave-history-type">
+                              {getLeaveTypeName(leave.leaveTypeId)}
+                            </span>
+                            <span className="leave-history-dates">
+                              {start.toLocaleDateString("en-IN")} → {end.toLocaleDateString("en-IN")} · {days} day{days !== 1 ? "s" : ""}
+                            </span>
+                            <span className="leave-history-reason">{leave.reason}</span>
+                          </div>
+                          <span className={`status-badge status-${leave.status?.toLowerCase()}`}>
+                            {leave.status}
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : (
+                <p className="no-data">No {filter !== "all" ? filter : ""} leave records found</p>
+              )}
+            </div>
           </div>
         </main>
       </div>

@@ -66,7 +66,10 @@ export default function Sidebar({ activePath = '' }) {
           </li>
 
           {/* Inbox */}
-          <li className="sidebar-item">
+          <li
+            className={`sidebar-item ${activePath === '/inbox' ? 'active' : ''}`}
+            onClick={() => router.push('/inbox')}
+          >
             <span className="sidebar-icon">📥</span>
             <span>Inbox</span>
           </li>
@@ -112,7 +115,10 @@ export default function Sidebar({ activePath = '' }) {
           </li>
 
           {/* Org */}
-          <li className="sidebar-item">
+          <li
+            className={`sidebar-item ${activePath === '/org' ? 'active' : ''}`}
+            onClick={() => router.push('/org')}
+          >
             <span className="sidebar-icon">🏢</span>
             <span>Org</span>
           </li>

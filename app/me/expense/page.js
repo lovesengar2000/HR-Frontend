@@ -63,7 +63,7 @@ export default function ExpensePage() {
 
       if (res.status === 200) {
         setUser(data.user);
-        setEmployee(data.Employee);
+        setEmployee(data.employee);
       }
 
       const expRes = await fetch(

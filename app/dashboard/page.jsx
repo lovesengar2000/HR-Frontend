@@ -17,6 +17,14 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [clockInTime, setClockInTime] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [postContent, setPostContent] = useState("");
+  const [postType, setPostType] = useState("text");
+  const [postImage, setPostImage] = useState(null);
+  const [postPollOptions, setPostPollOptions] = useState(["", ""]);
+  const [postQuestion, setPostQuestion] = useState("");
+  const [creatingPost, setCreatingPost] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -76,6 +84,15 @@ export default function Dashboard() {
           }
         }
       }
+
+      const postsRes = await fetch(
+        `/api/posts?companyId=${companyId}`,
+        { method: "GET", credentials: "include" }
+      );
+      if (postsRes.status === 200) {
+        const postsData = await postsRes.json();
+        setPosts(Array.isArray(postsData) ? postsData : postsData.posts || []);
+      }
     } catch (error) {
       console.error("Error loading dashboard:", error);
       setMessage("Failed to load dashboard data");
@@ -118,6 +135,83 @@ export default function Dashboard() {
       }
     } catch (error) {
       setMessage("Error: " + error.message);
+    }
+  };
+
+  const handleCreatePost = async () => {
+    if (!postContent && postType !== "poll") {
+      setMessage("Please add some content");
+      return;
+    }
+    if (postType === "poll" && (!postQuestion || postPollOptions.some(o => !o))) {
+      setMessage("Please fill in all poll fields");
+      return;
+    }
+
+    setCreatingPost(true);
+    try {
+      const payload = {
+        companyId: user.companyId,
+        employeeId: employee.employeeId,
+        type: postType,
+        content: postContent,
+      };
+
+      if (postType === "poll") {
+        payload.question = postQuestion;
+        payload.options = postPollOptions.filter(o => o.trim());
+      }
+
+      if (postImage && postType !== "poll") {
+        payload.imageUrl = postImage;
+      }
+
+      const res = await fetch("/api/posts/create", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status === 200 || res.status === 201) {
+        setMessage("Post created successfully!");
+        setPostContent("");
+        setPostImage(null);
+        setPostType("text");
+        setPostQuestion("");
+        setPostPollOptions(["", ""]);
+        setShowCreatePost(false);
+        loadDashboardData();
+        setTimeout(() => setMessage(""), 3000);
+      } else {
+        setMessage("Failed to create post");
+      }
+    } catch (error) {
+      setMessage("Error: " + error.message);
+    } finally {
+      setCreatingPost(false);
+    }
+  };
+
+  const handleVote = async (postId, optionIndex) => {
+    try {
+      const res = await fetch("/api/posts/vote", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postId,
+          companyId: user.companyId,
+          employeeId: employee.employeeId,
+          optionIndex,
+        }),
+      });
+
+      if (res.status === 200) {
+        loadDashboardData();
+      }
+    } catch (error) {
+      console.error("Error voting:", error);
     }
   };
 
@@ -367,7 +461,239 @@ export default function Dashboard() {
             </>
           )}
 
-          {role === "COMPANY_ADMIN" && (
+          {/* Posts Feed Section */}
+          {role === "USER" && (
+            <div className="posts-section">
+              <div className="posts-header">
+                <h2 className="posts-title">Company Feed</h2>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setShowCreatePost(true)}
+                >
+                  + Create Post
+                </button>
+              </div>
+
+              {posts.length > 0 ? (
+                <div className="posts-feed">
+                  {posts.map((post) => (
+                    <div key={post.postId || Math.random()} className="post-card HRM-card">
+                      {/* Post Header */}
+                      <div className="post-header">
+                        <div className="post-author">
+                          <div className="post-avatar">
+                            {post.employeeName?.[0]?.toUpperCase() || "?"}
+                          </div>
+                          <div className="post-author-info">
+                            <span className="post-author-name">{post.employeeName}</span>
+                            <span className="post-date">
+                              {new Date(post.createdAt).toLocaleDateString("en-IN")}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Post Content */}
+                      {post.type === "text" && (
+                        <div className="post-content">
+                          <p>{post.content}</p>
+                        </div>
+                      )}
+
+                      {post.type === "image" && (
+                        <div className="post-media">
+                          <img src={post.imageUrl} alt="Post" className="post-image" />
+                          {post.content && <p className="post-caption">{post.content}</p>}
+                        </div>
+                      )}
+
+                      {post.type === "video" && (
+                        <div className="post-media">
+                          <video controls className="post-video">
+                            <source src={post.videoUrl} type="video/mp4" />
+                          </video>
+                          {post.content && <p className="post-caption">{post.content}</p>}
+                        </div>
+                      )}
+
+                      {post.type === "poll" && (
+                        <div className="post-poll">
+                          <div className="poll-question">{post.question}</div>
+                          <div className="poll-options">
+                            {post.options?.map((option, idx) => {
+                              const totalVotes = post.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 0;
+                              const percentage = totalVotes > 0 ? Math.round((option.votes || 0) / totalVotes * 100) : 0;
+                              const hasVoted = post.userVoted === idx;
+
+                              return (
+                                <button
+                                  key={idx}
+                                  className={`poll-option ${hasVoted ? "voted" : ""}`}
+                                  onClick={() => handleVote(post.postId, idx)}
+                                >
+                                  <div className="poll-option-bar" style={{ width: `${percentage}%` }} />
+                                  <span className="poll-option-text">{option.text}</span>
+                                  <span className="poll-option-count">{option.votes || 0} ({percentage}%)</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="posts-empty">
+                  <span>📝</span>
+                  <p>No posts yet. Be the first to share!</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Create Post Modal */}
+          {showCreatePost && (
+            <div className="modal-overlay" onClick={() => setShowCreatePost(false)}>
+              <div className="modal-card modal-lg" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                  <h3>Create Post</h3>
+                  <button
+                    className="modal-close"
+                    onClick={() => setShowCreatePost(false)}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="modal-body">
+                  {/* Post Type Selector */}
+                  <div className="post-type-selector">
+                    <label className="post-type-option">
+                      <input
+                        type="radio"
+                        value="text"
+                        checked={postType === "text"}
+                        onChange={(e) => setPostType(e.target.value)}
+                      />
+                      <span>📝 Text</span>
+                    </label>
+                    <label className="post-type-option">
+                      <input
+                        type="radio"
+                        value="image"
+                        checked={postType === "image"}
+                        onChange={(e) => setPostType(e.target.value)}
+                      />
+                      <span>🖼️ Image</span>
+                    </label>
+                    <label className="post-type-option">
+                      <input
+                        type="radio"
+                        value="video"
+                        checked={postType === "video"}
+                        onChange={(e) => setPostType(e.target.value)}
+                      />
+                      <span>🎥 Video</span>
+                    </label>
+                    <label className="post-type-option">
+                      <input
+                        type="radio"
+                        value="poll"
+                        checked={postType === "poll"}
+                        onChange={(e) => setPostType(e.target.value)}
+                      />
+                      <span>📊 Poll</span>
+                    </label>
+                  </div>
+
+                  {/* Content Input */}
+                  {postType !== "poll" && (
+                    <>
+                      <textarea
+                        className="form-control"
+                        placeholder={
+                          postType === "image"
+                            ? "Add a caption for your image..."
+                            : postType === "video"
+                            ? "Add a caption for your video..."
+                            : "What's on your mind?"
+                        }
+                        value={postContent}
+                        onChange={(e) => setPostContent(e.target.value)}
+                        style={{ minHeight: "100px", marginTop: "1rem" }}
+                      />
+
+                      {(postType === "image" || postType === "video") && (
+                        <div style={{ marginTop: "1rem" }}>
+                          <input
+                            type="text"
+                            className="form-control"
+                            placeholder={`Enter ${postType} URL`}
+                            value={postImage}
+                            onChange={(e) => setPostImage(e.target.value)}
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Poll Input */}
+                  {postType === "poll" && (
+                    <div style={{ marginTop: "1rem" }}>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Enter your question"
+                        value={postQuestion}
+                        onChange={(e) => setPostQuestion(e.target.value)}
+                      />
+                      <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                        {postPollOptions.map((opt, idx) => (
+                          <input
+                            key={idx}
+                            type="text"
+                            className="form-control"
+                            placeholder={`Option ${idx + 1}`}
+                            value={opt}
+                            onChange={(e) => {
+                              const newOptions = [...postPollOptions];
+                              newOptions[idx] = e.target.value;
+                              setPostPollOptions(newOptions);
+                            }}
+                          />
+                        ))}
+                        {postPollOptions.length < 5 && (
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => setPostPollOptions([...postPollOptions, ""])}
+                          >
+                            + Add Option
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="modal-footer">
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => setShowCreatePost(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleCreatePost}
+                    disabled={creatingPost}
+                  >
+                    {creatingPost ? "Creating..." : "Create"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
             <div className="HRM-card">
               <div className="HRM-card-header">
                 <span className="HRM-card-title">Admin Panel</span>
@@ -379,7 +705,7 @@ export default function Dashboard() {
                 Go to Admin Dashboard →
               </button>
             </div>
-          )}
+          
         </main>
       </div>
     </div>

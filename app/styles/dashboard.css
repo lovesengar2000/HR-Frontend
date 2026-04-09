@@ -204,7 +204,7 @@ body {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - var(--navbar-height));
+  /* height: calc(100vh - var(--navbar-height)); */
   position: sticky;
   top: var(--navbar-height);
   overflow-y: auto;
@@ -2268,6 +2268,297 @@ tbody tr:hover td {
   color: var(--text-muted);
   font-size: 12px;
   margin-top: 0.25rem;
+}
+
+/* ============================================================
+   Posts Feed
+   ============================================================ */
+
+.posts-section {
+  margin-top: 2rem;
+}
+
+.posts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.posts-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.posts-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.post-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.post-author {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.post-avatar {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--accent), #a855f7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.post-author-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.post-author-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.post-date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.post-content {
+  padding: 1rem 0;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.post-content p {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.post-media {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.post-image,
+.post-video {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+
+.post-caption {
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Poll Styling */
+.post-poll {
+  padding: 1rem 0;
+}
+
+.poll-question {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-size: 15px;
+}
+
+.poll-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.poll-option {
+  position: relative;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.poll-option:hover {
+  background: rgba(91, 141, 238, 0.08);
+  border-color: var(--accent);
+}
+
+.poll-option.voted {
+  background: rgba(91, 141, 238, 0.15);
+  border-color: var(--accent);
+}
+
+.poll-option-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), rgba(91, 141, 238, 0.3));
+  z-index: 0;
+  transition: width 0.3s ease;
+}
+
+.poll-option-text {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.poll-option-count {
+  position: relative;
+  z-index: 1;
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.posts-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  gap: 1rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+.posts-empty span {
+  font-size: 48px;
+}
+
+.posts-empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Create Post Modal */
+.modal-lg {
+  max-width: 600px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.modal-close:hover {
+  color: var(--text-primary);
+}
+
+.modal-body {
+  margin-bottom: 1.5rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.post-type-selector {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.post-type-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.post-type-option input[type="radio"] {
+  cursor: pointer;
+}
+
+.post-type-option input[type="radio"]:checked + span {
+  color: var(--accent);
+}
+
+.post-type-option:has(input[type="radio"]:checked) {
+  background: rgba(91, 141, 238, 0.1);
+  border-color: var(--accent);
+}
+
+.post-type-option:hover {
+  background: rgba(91, 141, 238, 0.08);
+  border-color: var(--accent);
 }
 
 /* ============================================================

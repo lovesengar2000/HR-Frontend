@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import authAPI from '@/lib/authAPI';
-import Navbar from '@/components/Navbar';
+import authAPI from '../../lib/authAPI';
+import Navbar from '../../components/Navbar';
 import '../styles/dashboard.css';
 
 export default function AdminDashboard() {

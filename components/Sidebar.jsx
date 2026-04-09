@@ -10,9 +10,9 @@ export default function Sidebar({ activePath = '' }) {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-logo">
+      {/* <div className="sidebar-logo">
         <span className="sidebar-logo-text">HRM</span>
-      </div>
+      </div> */}
       <nav className="sidebar-nav">
         <ul className="sidebar-menu">
 

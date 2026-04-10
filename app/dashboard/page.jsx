@@ -224,6 +224,19 @@ export default function Dashboard() {
     router.push("/");
   };
 
+   const calcUsedDays = (leaveTypeId) =>
+    leaveBalance
+      .filter(
+        (t) =>
+          t.leaveTypeId === leaveTypeId 
+          // && t.status?.toLowerCase() === "accepted"
+      )
+      .reduce((sum, t) => {
+        const start = new Date(t.startDate);
+        const end = new Date(t.endDate);
+        return sum + Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+      }, 0);
+
   const today = new Date();
   const dateStr = today.toLocaleDateString("en-IN", {
     weekday: "long",
@@ -276,10 +289,13 @@ export default function Dashboard() {
           </div>
 
           {role === "USER" && (
-            <>
-              {/* Top Row Cards */}
-              <div className="card-grid-3">
-                {/* Clock In/Out Card */}
+            <div className="dashboard-columns">
+
+              {/* ── Left Column: Quick Access ── */}
+              <div className="dashboard-col-left">
+                <h2 className="col-section-title">Quick Access</h2>
+
+                {/* Attendance */}
                 <div className="HRM-card attendance-card">
                   <div className="HRM-card-header">
                     <span className="HRM-card-title">Today's Attendance</span>
@@ -329,7 +345,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Leave Balance Card */}
+                {/* Leave Balance */}
                 <div className="HRM-card">
                   <div className="HRM-card-header">
                     <span className="HRM-card-title">Leave Balance</span>
@@ -343,21 +359,19 @@ export default function Dashboard() {
                   {leaves && Object.keys(leaves).length > 0 ? (
                     <div className="leave-balance-list">
                       {Object.entries(leaves).map(([, value]) => {
-                        const used = leaveBalance.filter(
-                          (t) => t.leaveTypeId === value.leaveTypeId
-                        ).length;
-                        const available = value.maxDaysPerYear - used;
+                        const used = calcUsedDays(value.leaveTypeId);
+                        console.log("Leave Type:", value.name, "Used:", used, "Max:", value.maxDaysPerYear);
                         return (
                           <div key={value.leaveTypeId} className="leave-balance-row">
                             <span className="leave-type-name">{value.name}</span>
                             <div className="leave-balance-bar-wrap">
                               <div
                                 className="leave-balance-bar"
-                                style={{ width: `${(available / value.maxDaysPerYear) * 100}%` }}
+                                style={{ width: `${( ( value.maxDaysPerYear - used) / value.maxDaysPerYear) * 100}%` }}
                               />
                             </div>
                             <span className="leave-balance-count">
-                              {available}/{value.maxDaysPerYear}
+                              {( value.maxDaysPerYear - used)}/{value.maxDaysPerYear}
                             </span>
                           </div>
                         );
@@ -368,7 +382,7 @@ export default function Dashboard() {
                   )}
                 </div>
 
-                {/* Quick Actions Card */}
+                {/* Quick Actions */}
                 <div className="HRM-card">
                   <div className="HRM-card-header">
                     <span className="HRM-card-title">Quick Actions</span>
@@ -397,158 +411,142 @@ export default function Dashboard() {
                     </button>
                     <button
                       className="quick-action-btn"
-                      onClick={() => router.push("/me/leave")}
+                      onClick={() => router.push("/me/expense")}
                     >
-                      <span className="qa-icon">📅</span>
-                      <span>My Leaves</span>
+                      <span className="qa-icon">💳</span>
+                      <span>Expenses</span>
+                    </button>
+                    <button
+                      className="quick-action-btn"
+                      onClick={() => router.push("/performance/objectives/my")}
+                    >
+                      <span className="qa-icon">🎯</span>
+                      <span>Objectives</span>
+                    </button>
+                    <button
+                      className="quick-action-btn"
+                      onClick={() => router.push("/inbox")}
+                    >
+                      <span className="qa-icon">📬</span>
+                      <span>Inbox</span>
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Recent Leave Applications */}
-              {leaveBalance.length > 0 && (
-                <div className="HRM-card HRM-card-full">
-                  <div className="HRM-card-header">
-                    <span className="HRM-card-title">Recent Leave Applications</span>
-                    <button
-                      className="btn btn-link-sm"
-                      onClick={() => router.push("/me/leave")}
-                    >
-                      View all →
-                    </button>
-                  </div>
-                  <div className="table-container">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Type</th>
-                          <th>From</th>
-                          <th>To</th>
-                          <th>Days</th>
-                          <th>Reason</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {leaveBalance.slice(0, 5).reverse().map((leave) => {
-                          const start = new Date(leave.startDate);
-                          const end = new Date(leave.endDate);
-                          const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-                          const typeName = Object.values(leaves).find(
-                            (l) => l.leaveTypeId === leave.leaveTypeId
-                          )?.name || "—";
-                          return (
-                            <tr key={leave.leaveRequestId}>
-                              <td>{typeName}</td>
-                              <td>{start.toLocaleDateString("en-IN")}</td>
-                              <td>{end.toLocaleDateString("en-IN")}</td>
-                              <td>{days}</td>
-                              <td>{leave.reason}</td>
-                              <td>
-                                <span className={`status-badge status-${leave.status?.toLowerCase()}`}>
-                                  {leave.status}
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+              {/* ── Right Column: Engagement ── */}
+              <div className="dashboard-col-right">
+                <div className="col-section-header">
+                  <h2 className="col-section-title">Engagement</h2>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => setShowCreatePost(true)}
+                  >
+                    + Post / Poll / Praise
+                  </button>
                 </div>
-              )}
-            </>
+
+                {posts.length > 0 ? (
+                  <div className="posts-feed">
+                    {posts.map((post) => (
+                      <div key={post.postId || Math.random()} className="post-card HRM-card">
+                        {/* Post Header */}
+                        <div className="post-header">
+                          <div className="post-author">
+                            <div className="post-avatar">
+                              {post.employeeName?.[0]?.toUpperCase() || "?"}
+                            </div>
+                            <div className="post-author-info">
+                              <span className="post-author-name">{post.employeeName}</span>
+                              <span className="post-date">
+                                {new Date(post.createdAt).toLocaleDateString("en-IN")}
+                              </span>
+                            </div>
+                          </div>
+                          {post.type && (
+                            <span className="post-type-badge">
+                              {post.type === "poll" ? "📊 Poll" : post.type === "praise" ? "🌟 Praise" : "📝 Post"}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Post Content */}
+                        {post.type === "text" && (
+                          <div className="post-content">
+                            <p>{post.content}</p>
+                          </div>
+                        )}
+
+                        {post.type === "praise" && (
+                          <div className="post-content post-praise">
+                            <p>{post.content}</p>
+                          </div>
+                        )}
+
+                        {post.type === "image" && (
+                          <div className="post-media">
+                            <img src={post.imageUrl} alt="Post" className="post-image" />
+                            {post.content && <p className="post-caption">{post.content}</p>}
+                          </div>
+                        )}
+
+                        {post.type === "video" && (
+                          <div className="post-media">
+                            <video controls className="post-video">
+                              <source src={post.videoUrl} type="video/mp4" />
+                            </video>
+                            {post.content && <p className="post-caption">{post.content}</p>}
+                          </div>
+                        )}
+
+                        {post.type === "poll" && (
+                          <div className="post-poll">
+                            <div className="poll-question">{post.question}</div>
+                            <div className="poll-options">
+                              {post.options?.map((option, idx) => {
+                                const totalVotes = post.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 0;
+                                const percentage = totalVotes > 0 ? Math.round((option.votes || 0) / totalVotes * 100) : 0;
+                                const hasVoted = post.userVoted === idx;
+
+                                return (
+                                  <button
+                                    key={idx}
+                                    className={`poll-option ${hasVoted ? "voted" : ""}`}
+                                    onClick={() => handleVote(post.postId, idx)}
+                                  >
+                                    <div className="poll-option-bar" style={{ width: `${percentage}%` }} />
+                                    <span className="poll-option-text">{option.text}</span>
+                                    <span className="poll-option-count">{option.votes || 0} ({percentage}%)</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="posts-empty">
+                    <span>📝</span>
+                    <p>No posts yet. Be the first to share!</p>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
-          {/* Posts Feed Section */}
-          {role === "USER" && (
-            <div className="posts-section">
-              <div className="posts-header">
-                <h2 className="posts-title">Company Feed</h2>
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={() => setShowCreatePost(true)}
-                >
-                  + Create Post
-                </button>
+          {role === "COMPANY_ADMIN" && (
+            <div className="HRM-card">
+              <div className="HRM-card-header">
+                <span className="HRM-card-title">Admin Panel</span>
               </div>
-
-              {posts.length > 0 ? (
-                <div className="posts-feed">
-                  {posts.map((post) => (
-                    <div key={post.postId || Math.random()} className="post-card HRM-card">
-                      {/* Post Header */}
-                      <div className="post-header">
-                        <div className="post-author">
-                          <div className="post-avatar">
-                            {post.employeeName?.[0]?.toUpperCase() || "?"}
-                          </div>
-                          <div className="post-author-info">
-                            <span className="post-author-name">{post.employeeName}</span>
-                            <span className="post-date">
-                              {new Date(post.createdAt).toLocaleDateString("en-IN")}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Post Content */}
-                      {post.type === "text" && (
-                        <div className="post-content">
-                          <p>{post.content}</p>
-                        </div>
-                      )}
-
-                      {post.type === "image" && (
-                        <div className="post-media">
-                          <img src={post.imageUrl} alt="Post" className="post-image" />
-                          {post.content && <p className="post-caption">{post.content}</p>}
-                        </div>
-                      )}
-
-                      {post.type === "video" && (
-                        <div className="post-media">
-                          <video controls className="post-video">
-                            <source src={post.videoUrl} type="video/mp4" />
-                          </video>
-                          {post.content && <p className="post-caption">{post.content}</p>}
-                        </div>
-                      )}
-
-                      {post.type === "poll" && (
-                        <div className="post-poll">
-                          <div className="poll-question">{post.question}</div>
-                          <div className="poll-options">
-                            {post.options?.map((option, idx) => {
-                              const totalVotes = post.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 0;
-                              const percentage = totalVotes > 0 ? Math.round((option.votes || 0) / totalVotes * 100) : 0;
-                              const hasVoted = post.userVoted === idx;
-
-                              return (
-                                <button
-                                  key={idx}
-                                  className={`poll-option ${hasVoted ? "voted" : ""}`}
-                                  onClick={() => handleVote(post.postId, idx)}
-                                >
-                                  <div className="poll-option-bar" style={{ width: `${percentage}%` }} />
-                                  <span className="poll-option-text">{option.text}</span>
-                                  <span className="poll-option-count">{option.votes || 0} ({percentage}%)</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="posts-empty">
-                  <span>📝</span>
-                  <p>No posts yet. Be the first to share!</p>
-                </div>
-              )}
+              <p style={{ color: "var(--text-muted)", marginBottom: "1rem" }}>
+                You have administrative privileges. Manage your company from the admin dashboard.
+              </p>
+              <button className="btn btn-primary" onClick={() => router.push("/admin")}>
+                Go to Admin Dashboard →
+              </button>
             </div>
           )}
 
@@ -576,25 +574,7 @@ export default function Dashboard() {
                         checked={postType === "text"}
                         onChange={(e) => setPostType(e.target.value)}
                       />
-                      <span>📝 Text</span>
-                    </label>
-                    <label className="post-type-option">
-                      <input
-                        type="radio"
-                        value="image"
-                        checked={postType === "image"}
-                        onChange={(e) => setPostType(e.target.value)}
-                      />
-                      <span>🖼️ Image</span>
-                    </label>
-                    <label className="post-type-option">
-                      <input
-                        type="radio"
-                        value="video"
-                        checked={postType === "video"}
-                        onChange={(e) => setPostType(e.target.value)}
-                      />
-                      <span>🎥 Video</span>
+                      <span>📝 Post</span>
                     </label>
                     <label className="post-type-option">
                       <input
@@ -605,6 +585,24 @@ export default function Dashboard() {
                       />
                       <span>📊 Poll</span>
                     </label>
+                    <label className="post-type-option">
+                      <input
+                        type="radio"
+                        value="praise"
+                        checked={postType === "praise"}
+                        onChange={(e) => setPostType(e.target.value)}
+                      />
+                      <span>🌟 Praise</span>
+                    </label>
+                    <label className="post-type-option">
+                      <input
+                        type="radio"
+                        value="image"
+                        checked={postType === "image"}
+                        onChange={(e) => setPostType(e.target.value)}
+                      />
+                      <span>🖼️ Image</span>
+                    </label>
                   </div>
 
                   {/* Content Input */}
@@ -613,10 +611,10 @@ export default function Dashboard() {
                       <textarea
                         className="form-control"
                         placeholder={
-                          postType === "image"
+                          postType === "praise"
+                            ? "Recognise someone's great work..."
+                            : postType === "image"
                             ? "Add a caption for your image..."
-                            : postType === "video"
-                            ? "Add a caption for your video..."
                             : "What's on your mind?"
                         }
                         value={postContent}
@@ -624,12 +622,12 @@ export default function Dashboard() {
                         style={{ minHeight: "100px", marginTop: "1rem" }}
                       />
 
-                      {(postType === "image" || postType === "video") && (
+                      {postType === "image" && (
                         <div style={{ marginTop: "1rem" }}>
                           <input
                             type="text"
                             className="form-control"
-                            placeholder={`Enter ${postType} URL`}
+                            placeholder="Enter image URL"
                             value={postImage}
                             onChange={(e) => setPostImage(e.target.value)}
                           />
@@ -694,18 +692,6 @@ export default function Dashboard() {
               </div>
             </div>
           )}
-            <div className="HRM-card">
-              <div className="HRM-card-header">
-                <span className="HRM-card-title">Admin Panel</span>
-              </div>
-              <p style={{ color: "var(--text-muted)", marginBottom: "1rem" }}>
-                You have administrative privileges. Manage your company from the admin dashboard.
-              </p>
-              <button className="btn btn-primary" onClick={() => router.push("/admin")}>
-                Go to Admin Dashboard →
-              </button>
-            </div>
-          
         </main>
       </div>
     </div>

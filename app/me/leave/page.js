@@ -40,7 +40,7 @@ export default function LeavePage() {
 
       if (userdata.status === 200) {
         setUser(userDataJson.user);
-        setEmployee(userDataJson.Employee);
+        setEmployee(userDataJson.employee);
       }
 
       const LeaveData = await fetch(
@@ -118,6 +118,19 @@ export default function LeavePage() {
   const countByStatus = (status) =>
     leaveBalance.filter((l) => l.status?.toLowerCase() === status).length;
 
+  const calcUsedDays = (leaveTypeId) =>
+    leaveBalance
+      .filter(
+        (t) =>
+          t.leaveTypeId === leaveTypeId 
+          // && t.status?.toLowerCase() === "accepted"
+      )
+      .reduce((sum, t) => {
+        const start = new Date(t.startDate);
+        const end = new Date(t.endDate);
+        return sum + Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+      }, 0);
+
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
@@ -167,9 +180,7 @@ export default function LeavePage() {
           {Object.keys(leaves).length > 0 && (
             <div className="leave-quota-row">
               {Object.entries(leaves).map(([, value]) => {
-                const used = leaveBalance.filter(
-                  (t) => t.leaveTypeId === value.leaveTypeId
-                ).length;
+                const used = calcUsedDays(value.leaveTypeId);
                 const available = value.maxDaysPerYear - used;
                 return (
                   <div key={value.leaveTypeId} className="leave-quota-card">
@@ -198,9 +209,7 @@ export default function LeavePage() {
                   >
                     <option value="">Select leave type</option>
                     {Object.entries(leaves).map(([, value]) => {
-                      const used = leaveBalance.filter(
-                        (t) => t.leaveTypeId === value.leaveTypeId
-                      ).length;
+                      const used = calcUsedDays(value.leaveTypeId);
                       const available = value.maxDaysPerYear - used;
                       return (
                         <option key={value.leaveTypeId} value={value.leaveTypeId}>

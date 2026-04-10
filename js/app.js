@@ -214,10 +214,10 @@ class AuthApp {
                 localStorage.setItem('user', JSON.stringify(result.data.user));
                 
                 // Extract and store employee ID if available
-                if (result.data.Employee && result.data.Employee.employeeId) {
-                    console.log('Employee ID found in login response:', result.data.Employee.employeeId);
-                    localStorage.setItem('currentEmployeeId', result.data.Employee.employeeId);
-                    localStorage.setItem('employeeData', JSON.stringify(result.data.Employee));
+                if (result.data.employee && result.data.employee.employeeId) {
+                    console.log('Employee ID found in login response:', result.data.employee.employeeId);
+                    localStorage.setItem('currentEmployeeId', result.data.employee.employeeId);
+                    localStorage.setItem('employeeData', JSON.stringify(result.data.employee));
                 } else if (result.data.employeeId) {
                     // Alternative: check if employeeId is at root level
                     console.log('Employee ID at root level:', result.data.employeeId);
@@ -308,8 +308,8 @@ class AuthApp {
                 localStorage.setItem('user', JSON.stringify(result.data.user));
                 
                 // Store employee ID if available
-                if (result.data.Employee && result.data.Employee.employeeId) {
-                    localStorage.setItem('currentEmployeeId', result.data.Employee.employeeId);
+                if (result.data.employee && result.data.employee.employeeId) {
+                    localStorage.setItem('currentEmployeeId', result.data.employee.employeeId);
                 }
                 
                 // Company registration is always admin
@@ -373,8 +373,8 @@ class AuthApp {
                 localStorage.setItem('user', JSON.stringify(result.data.user));
                 
                 // Store employee ID if available
-                if (result.data.Employee && result.data.Employee.employeeId) {
-                    localStorage.setItem('currentEmployeeId', result.data.Employee.employeeId);
+                if (result.data.employee && result.data.employee.employeeId) {
+                    localStorage.setItem('currentEmployeeId', result.data.employee.employeeId);
                 }
                 
                 // Employee registration is usually regular user

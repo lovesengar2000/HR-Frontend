@@ -7,7 +7,7 @@ export async function GET(request) {
 
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/my-team?companyId=${companyId}&employeeId=${employeeId}&managerId=${managerId}`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/myteam?companyId=${companyId}&employeeId=${employeeId}&managerId=${managerId}`,
       {
         method: "GET",
         headers: {

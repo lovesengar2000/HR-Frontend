@@ -42,7 +42,7 @@ export default function AdminAssetsPage() {
       const res  = await fetch("/api/users/getData", { method: "GET", credentials: "include" });
       const raw  = await res.json();
       const data = JSON.parse(raw);
-      if (res.status === 200) { setUser(data.user); setEmployee(data.Employee); }
+      if (res.status === 200) { setUser(data.user); setEmployee(data.employee); }
 
       const adminRes = await fetch(
         `/api/admin/assets?companyId=${data.user.companyId}`,

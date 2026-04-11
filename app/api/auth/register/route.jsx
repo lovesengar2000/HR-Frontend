@@ -3,8 +3,10 @@ import { NextResponse } from "next/server";
 export async function POST(request) {
   try {
     const body = await request.json();
+
+
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/login`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/register`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -16,7 +18,7 @@ export async function POST(request) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { success: false, error: data.message || data.error || "Invalid credentials" },
+        { success: false, error: data.message || data.error || "Registration failed" },
         { status: response.status }
       );
     }
@@ -26,7 +28,7 @@ export async function POST(request) {
       token: data.token,
       userId: data.userId,
       companyId: data.companyId,
-      role: data.role,
+      role: "COMPANY_ADMIN",
     });
 
     outResponse.cookies.set("authToken", data.token, {
@@ -35,7 +37,7 @@ export async function POST(request) {
       sameSite: "strict",
       path: "/",
     });
-    
+
     outResponse.cookies.set("userData", JSON.stringify(data), {
       httpOnly: true,
       secure: true,
@@ -51,5 +53,3 @@ export async function POST(request) {
     );
   }
 }
-
-  

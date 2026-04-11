@@ -1,38 +1,141 @@
-@import "tailwindcss";
-
-.LoginWrapper {
-  height: 100vh;
-  width: 100%;
-  background-color: #f3f3f3;
+.Wrapper {
+  min-height: 100vh;
+  background: linear-gradient(170deg, #f8f4ff 0%, #eef4ff 55%, #ffffff 100%);
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  position: relative;
+  overflow: hidden;
 }
 
-.LoginModal {
-  background-color: #ffffff;
-  padding: 30px;
-  min-width: 400px;
-  border-radius: 6px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+.Wrapper::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(106, 17, 203, 0.07) 0%, transparent 70%);
+  pointer-events: none;
 }
 
-.FormBlock {
+.BackLink {
+  position: fixed;
+  top: 20px;
+  left: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #6a11cb;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(106, 17, 203, 0.15);
+  transition: background 0.2s, transform 0.2s;
+  z-index: 10;
+}
+
+.BackLink:hover {
+  background: rgba(255, 255, 255, 0.98);
+  transform: translateX(-2px);
+}
+
+.Card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(106, 17, 203, 0.12), 0 4px 20px rgba(0, 0, 0, 0.06);
+  width: 100%;
+  max-width: 480px;
+  overflow: hidden;
+  border: 1px solid rgba(106, 17, 203, 0.08);
+  animation: slideUp 0.4s ease-out both;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.CardHeader {
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  padding: 28px 36px 24px;
+  text-align: center;
+}
+
+.Logo {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+
+.Tagline {
+  font-size: 0.84rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 400;
+}
+
+.Form {
+  padding: 26px 32px 22px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 14px;
+}
+
+.FieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.Label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #555;
+  letter-spacing: 0.02em;
 }
 
 .Input {
-  padding: 14px;
-  border-radius: 4px;
-  border: 1px solid #d3d3d3;
-  font-size: 14px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1.5px solid #e2e2e2;
+  font-size: 0.92rem;
   outline: none;
+  color: #1a1a2e;
+  background: #fafafa;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .Input:focus {
-  border-color: #6c5ce7;
+  border-color: #6a11cb;
+  box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
+  background: #fff;
+}
+
+.Input::placeholder {
+  color: #c0c0c0;
+}
+
+.InputError {
+  border-color: #e74c3c !important;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1) !important;
+}
+
+.FieldError {
+  font-size: 0.75rem;
+  color: #e74c3c;
+  margin-top: 2px;
 }
 
 .CaptchaRow {
@@ -41,47 +144,163 @@
   gap: 10px;
 }
 
-.CaptchaText {
-  font-size: 20px;
-  font-weight: bold;
-  color: #9acd32;
-  letter-spacing: 2px;
+.CaptchaBox {
+  background: linear-gradient(135deg, #1a1a2e, #2d2d5e);
+  color: #a78bfa;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 5px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-family: 'Courier New', Courier, monospace;
+  user-select: none;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.CaptchaBox::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: rgba(167, 139, 250, 0.35);
+  transform: rotate(-3deg);
 }
 
 .RefreshBtn {
-  border: none;
-  background: none;
-  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  background: rgba(106, 17, 203, 0.07);
+  border: 1.5px solid rgba(106, 17, 203, 0.18);
+  border-radius: 8px;
+  font-size: 1rem;
   cursor: pointer;
-  color: #6c5ce7;
+  color: #6a11cb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.3s;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+
+.RefreshBtn:hover {
+  background: rgba(106, 17, 203, 0.13);
+  transform: rotate(180deg);
 }
 
 .CaptchaInput {
   flex: 1;
-  padding: 12px;
-  border-radius: 4px;
-  border: 1px solid #d3d3d3;
-  font-size: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #e2e2e2;
+  font-size: 0.92rem;
   outline: none;
+  color: #1a1a2e;
+  background: #fafafa;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  font-family: inherit;
+  min-width: 0;
 }
 
-.LoginBtn {
-  margin-top: 10px;
-  padding: 14px;
-  background-color: #5e4bb6;
-  color: white;
+.CaptchaInput:focus {
+  border-color: #6a11cb;
+  box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
+  background: #fff;
+}
+
+.CaptchaInput::placeholder {
+  color: #c0c0c0;
+}
+
+.Message {
+  padding: 11px 14px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  line-height: 1.45;
+  animation: fadeSlide 0.2s ease-out;
+}
+
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.MessageError {
+  background: #fff1f0;
+  color: #c0392b;
+  border-left: 3px solid #e74c3c;
+}
+
+.MessageSuccess {
+  background: #f0fff4;
+  color: #27ae60;
+  border-left: 3px solid #2ecc71;
+}
+
+.SubmitBtn {
+  padding: 13px;
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  color: #fff;
   border: none;
-  border-radius: 4px;
-  font-weight: 600;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+  box-shadow: 0 4px 18px rgba(106, 17, 203, 0.28);
+  font-family: inherit;
+  width: 100%;
+  margin-top: 4px;
 }
 
-.LoginBtn:hover {
-  background-color: #4a39a5;
+.SubmitBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 26px rgba(106, 17, 203, 0.36);
 }
 
-.ForgotPassword {
-  color: #5e4bb6;
+.SubmitBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.SubmitBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.Divider {
+  border: none;
+  border-top: 1px solid #f0f0f0;
+  margin: 4px 0;
+}
+
+.Footer {
+  text-align: center;
+  font-size: 0.83rem;
+  color: #888;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.FooterLink {
+  color: #6a11cb;
+  font-weight: 700;
   cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.2s;
+  background: none;
+  border: none;
+  font-size: 0.83rem;
+  font-family: inherit;
+  padding: 0;
+}
+
+.FooterLink:hover {
+  opacity: 0.72;
 }

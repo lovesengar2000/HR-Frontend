@@ -2,59 +2,88 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import authAPI from '../../lib/authAPI';
 import Navbar from '../../components/Navbar';
+import AdminSidebar from '../../components/AdminSidebar';
 import '../styles/dashboard.css';
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [users, setUsers] = useState([]);
-  const [leaves, setLeaves] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');
+  const [user, setUser] = useState(null);
+  const [employee, setEmployee] = useState(null);
   const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalLeaves: 0,
-    approvedLeaves: 0,
+    totalEmployees: 0,
     pendingLeaves: 0,
+    approvedLeaves: 0,
+    pendingAssets: 0,
+    pendingExpenses: 0,
+    presentToday: 0,
   });
+  const [recentLeaves, setRecentLeaves] = useState([]);
+  const [recentExpenses, setRecentExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState({ text: '', type: '' });
 
-  useEffect(() => {
-    if (!authAPI.isAuthenticated() || !authAPI.isAdmin()) {
-      router.push('/');
-      return;
-    }
+  useEffect(() => { loadData(); }, []);
 
-    loadAdminData();
-  }, [router]);
-
-  const loadAdminData = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      const companyId = authAPI.getCompanyId();
+      // Get current user from cookie
+      const res = await fetch('/api/users/getData', { method: 'GET', credentials: 'include' });
+      const raw = await res.json();
+      const data = JSON.parse(raw);
+      if (res.status !== 200) { router.push('/'); return; }
+      setUser(data.user);
+      setEmployee(data.employee);
 
-      // Load all users
-      const usersData = await authAPI.getAllUsers(companyId);
-      if (usersData.success) {
-        setUsers(usersData.data);
+      const companyId = data.user.companyId;
+
+      // Parallel fetch: employees, leaves, assets, expenses
+      const [usersRes, leavesRes, assetsRes, expensesRes] = await Promise.all([
+        fetch(`/api/admin/users?companyId=${companyId}`, { credentials: 'include' }),
+        fetch(`/api/admin/leaves?companyId=${companyId}`, { credentials: 'include' }),
+        fetch(`/api/admin/assets?companyId=${companyId}`, { credentials: 'include' }),
+        fetch(`/api/admin/expenses?companyId=${companyId}`, { credentials: 'include' }),
+      ]);
+
+      let totalEmployees = 0, pendingLeaves = 0, approvedLeaves = 0,
+          pendingAssets = 0, pendingExpenses = 0;
+      let pendingLeavesList = [];
+      let pendingExpensesList = [];
+
+      if (usersRes.ok) {
+        const usersData = await usersRes.json();
+        const arr = Array.isArray(usersData) ? usersData : usersData.data || [];
+        totalEmployees = arr.length;
       }
 
-      // Load all leaves
-      const leavesData = await authAPI.getAllLeaveRequestsAdmin(companyId);
-      if (leavesData.success) {
-        setLeaves(leavesData.data);
-        const approved = leavesData.data.filter((l) => l.status === 'APPROVED').length;
-        const pending = leavesData.data.filter((l) => l.status === 'PENDING').length;
-        setStats({
-          totalUsers: usersData.data.length,
-          totalLeaves: leavesData.data.length,
-          approvedLeaves: approved,
-          pendingLeaves: pending,
-        });
+      if (leavesRes.ok) {
+        const leavesData = await leavesRes.json();
+        const arr = Array.isArray(leavesData) ? leavesData : leavesData.data || [];
+        pendingLeaves = arr.filter((l) => l.status === 'PENDING').length;
+        approvedLeaves = arr.filter((l) => l.status === 'APPROVED').length;
+        pendingLeavesList = arr.filter((l) => l.status === 'PENDING').slice(0, 5);
       }
-    } catch (error) {
-      console.error('Error loading admin data:', error);
-      setMessage('Failed to load admin data');
+
+      if (assetsRes.ok) {
+        const assetsData = await assetsRes.json();
+        const requests = assetsData.requests || [];
+        pendingAssets = requests.filter((r) => r.status === 'PENDING').length;
+      }
+
+      if (expensesRes.ok) {
+        const expensesData = await expensesRes.json();
+        const arr = Array.isArray(expensesData) ? expensesData : expensesData.data || [];
+        pendingExpenses = arr.filter((e) => e.status === 'PENDING').length;
+        pendingExpensesList = arr.filter((e) => e.status === 'PENDING').slice(0, 5);
+      }
+
+      setStats({ totalEmployees, pendingLeaves, approvedLeaves, pendingAssets, pendingExpenses });
+      setRecentLeaves(pendingLeavesList);
+      setRecentExpenses(pendingExpensesList);
+    } catch (err) {
+      console.error('Error loading admin dashboard:', err);
+      setMessage({ text: 'Failed to load dashboard data.', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -62,150 +91,229 @@ export default function AdminDashboard() {
 
   const handleApproveLeave = async (leaveId) => {
     try {
-      const companyId = authAPI.getCompanyId();
-      const result = await authAPI.approveLeave(leaveId, companyId);
-      if (result.success) {
-        setMessage('Leave approved successfully');
-        loadAdminData();
+      const res = await fetch('/api/admin/leaves/approve', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leaveId, companyId: user.companyId }),
+      });
+      if (res.ok) {
+        setMessage({ text: 'Leave approved.', type: 'success' });
+        loadData();
       } else {
-        setMessage('Failed to approve leave');
+        setMessage({ text: 'Failed to approve leave.', type: 'error' });
       }
-    } catch (error) {
-      setMessage('Error: ' + error.message);
+    } catch (err) {
+      setMessage({ text: 'Error: ' + err.message, type: 'error' });
     }
   };
 
   const handleRejectLeave = async (leaveId) => {
     try {
-      const companyId = authAPI.getCompanyId();
-      const result = await authAPI.rejectLeave(leaveId, companyId, 'Rejected by admin');
-      if (result.success) {
-        setMessage('Leave rejected successfully');
-        loadAdminData();
+      const res = await fetch('/api/admin/leaves/reject', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leaveId, companyId: user.companyId, reason: 'Rejected by admin' }),
+      });
+      if (res.ok) {
+        setMessage({ text: 'Leave rejected.', type: 'success' });
+        loadData();
       } else {
-        setMessage('Failed to reject leave');
+        setMessage({ text: 'Failed to reject leave.', type: 'error' });
       }
-    } catch (error) {
-      setMessage('Error: ' + error.message);
+    } catch (err) {
+      setMessage({ text: 'Error: ' + err.message, type: 'error' });
     }
+  };
+
+  const handleLogout = async () => {
+    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
+    router.push('/');
   };
 
   if (loading) {
     return (
-      <div>
-        <Navbar onLogout={() => router.push('/')} />
-        <div className="loading">
-          <div className="spinner"></div>
+      <div className="app-shell">
+        <Navbar onLogout={handleLogout} />
+        <div className="app-body">
+          <AdminSidebar activePath="/admin" />
+          <main className="main-content">
+            <div className="loading"><div className="spinner" /></div>
+          </main>
         </div>
       </div>
     );
   }
 
+  const emp = employee || {};
+
   return (
-    <div>
-      <Navbar onLogout={() => router.push('/')} />
-      <div className="dashboard-container">
-        {message && <div className="alert">{message}</div>}
+    <div className="app-shell">
+      <Navbar
+        onLogout={handleLogout}
+        userName={emp.name || user?.email}
+        userInitial={(emp.name || user?.email || 'A')[0].toUpperCase()}
+      />
+      <div className="app-body">
+        <AdminSidebar activePath="/admin" />
 
-        <div className="welcome-section">
-          <h1>Admin Dashboard</h1>
-          <p>Company Management & Oversight</p>
-        </div>
+        <main className="main-content">
 
-        {/* Stats Cards */}
-        <div className="stats-container">
-          <div className="stat-card">
-            <h4>Total Users</h4>
-            <p className="stat-number">{stats.totalUsers}</p>
+          {/* Header */}
+          <div className="page-header">
+            <div>
+              <h1 className="page-title">Admin Dashboard</h1>
+              <p className="page-subtitle">Company-wide overview and quick actions</p>
+            </div>
+            <span className="admin-role-badge">ADMIN</span>
           </div>
-          <div className="stat-card">
-            <h4>Total Leaves</h4>
-            <p className="stat-number">{stats.totalLeaves}</p>
-          </div>
-          <div className="stat-card">
-            <h4>Approved</h4>
-            <p className="stat-number">{stats.approvedLeaves}</p>
-          </div>
-          <div className="stat-card">
-            <h4>Pending</h4>
-            <p className="stat-number">{stats.pendingLeaves}</p>
-          </div>
-        </div>
 
-        {/* Users Management */}
-        {users.length > 0 && (
-          <div className="card full-width">
-            <h3>Manage Users</h3>
-            <button className="btn btn-primary" onClick={() => router.push('/admin/users')}>
-              View All Users
-            </button>
-          </div>
-        )}
+          {message.text && (
+            <div className={`alert ${message.type === 'error' ? 'alert-error' : 'alert-success'}`}>
+              {message.text}
+            </div>
+          )}
 
-        {/* Asset Management */}
-        <div className="card full-width">
-          <h3>Asset Management</h3>
-          <p style={{ color: '#8d9ab5', marginBottom: '1rem', fontSize: '0.875rem' }}>
-            Review pending asset requests and process employee returns.
-          </p>
-          <button className="btn btn-primary" onClick={() => router.push('/admin/assets')}>
-            Manage Assets →
-          </button>
-        </div>
-
-        {/* Leave Requests */}
-        {leaves.length > 0 && (
-          <div className="card full-width">
-            <h3>Leave Requests</h3>
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Employee</th>
-                    <th>Type</th>
-                    <th>From</th>
-                    <th>To</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaves.slice(0, 10).map((leave) => (
-                    <tr key={leave.id}>
-                      <td>{leave.employeeName}</td>
-                      <td>{leave.leaveTypeName}</td>
-                      <td>{new Date(leave.startDate).toLocaleDateString()}</td>
-                      <td>{new Date(leave.endDate).toLocaleDateString()}</td>
-                      <td>
-                        <span className={`status status-${leave.status?.toLowerCase()}`}>
-                          {leave.status}
-                        </span>
-                      </td>
-                      <td>
-                        {leave.status === 'PENDING' && (
-                          <div className="action-buttons">
-                            <button
-                              className="btn btn-small btn-success"
-                              onClick={() => handleApproveLeave(leave.id)}
-                            >
-                              Approve
-                            </button>
-                            <button
-                              className="btn btn-small btn-danger"
-                              onClick={() => handleRejectLeave(leave.id)}
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Stats Row */}
+          <div className="stats-row">
+            <div className="stat-tile">
+              <span className="stat-tile-label">Total Employees</span>
+              <span className="stat-tile-value">{stats.totalEmployees}</span>
+            </div>
+            <div className="stat-tile">
+              <span className="stat-tile-label">Pending Leaves</span>
+              <span className="stat-tile-value stat-amber">{stats.pendingLeaves}</span>
+            </div>
+            <div className="stat-tile">
+              <span className="stat-tile-label">Approved Leaves</span>
+              <span className="stat-tile-value stat-green">{stats.approvedLeaves}</span>
+            </div>
+            <div className="stat-tile">
+              <span className="stat-tile-label">Pending Assets</span>
+              <span className="stat-tile-value stat-amber">{stats.pendingAssets}</span>
+            </div>
+            <div className="stat-tile">
+              <span className="stat-tile-label">Pending Expenses</span>
+              <span className="stat-tile-value stat-amber">{stats.pendingExpenses}</span>
             </div>
           </div>
-        )}
+
+          {/* Quick Actions */}
+          <div className="HRM-card HRM-card-full">
+            <div className="HRM-card-header">
+              <span className="HRM-card-title">Quick Actions</span>
+            </div>
+            <div className="admin-quick-actions">
+              <button className="admin-quick-btn" onClick={() => router.push('/admin/users')}>
+                <span className="admin-quick-icon">👥</span>
+                <span className="admin-quick-label">Manage Employees</span>
+                <span className="admin-quick-count">{stats.totalEmployees}</span>
+              </button>
+              <button className="admin-quick-btn" onClick={() => router.push('/admin/leaves')}>
+                <span className="admin-quick-icon">📅</span>
+                <span className="admin-quick-label">Leave Requests</span>
+                {stats.pendingLeaves > 0 && (
+                  <span className="admin-quick-count admin-quick-count-amber">{stats.pendingLeaves} pending</span>
+                )}
+              </button>
+              <button className="admin-quick-btn" onClick={() => router.push('/admin/attendance')}>
+                <span className="admin-quick-icon">⏱️</span>
+                <span className="admin-quick-label">Attendance</span>
+              </button>
+              <button className="admin-quick-btn" onClick={() => router.push('/admin/assets')}>
+                <span className="admin-quick-icon">🖥️</span>
+                <span className="admin-quick-label">Assets</span>
+                {stats.pendingAssets > 0 && (
+                  <span className="admin-quick-count admin-quick-count-amber">{stats.pendingAssets} pending</span>
+                )}
+              </button>
+              <button className="admin-quick-btn" onClick={() => router.push('/admin/expenses')}>
+                <span className="admin-quick-icon">💰</span>
+                <span className="admin-quick-label">Expenses</span>
+                {stats.pendingExpenses > 0 && (
+                  <span className="admin-quick-count admin-quick-count-amber">{stats.pendingExpenses} pending</span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Two-column bottom section */}
+          <div className="admin-dashboard-grid">
+
+            {/* Pending Leave Requests */}
+            <div className="HRM-card">
+              <div className="HRM-card-header">
+                <span className="HRM-card-title">Pending Leave Requests</span>
+                <button className="btn-link-sm" onClick={() => router.push('/admin/leaves')}>
+                  View all →
+                </button>
+              </div>
+              {recentLeaves.length > 0 ? (
+                <div className="admin-list">
+                  {recentLeaves.map((leave) => (
+                    <div key={leave.id} className="admin-list-item">
+                      <div className="admin-list-info">
+                        <span className="admin-list-name">{leave.employeeName}</span>
+                        <span className="admin-list-meta">
+                          {leave.leaveTypeName} &middot;{' '}
+                          {new Date(leave.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                          {' – '}
+                          {new Date(leave.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.4rem' }}>
+                        <button
+                          className="btn-approve"
+                          onClick={() => handleApproveLeave(leave.id)}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          className="btn-reject"
+                          onClick={() => handleRejectLeave(leave.id)}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-data">No pending leave requests.</p>
+              )}
+            </div>
+
+            {/* Pending Expense Claims */}
+            <div className="HRM-card">
+              <div className="HRM-card-header">
+                <span className="HRM-card-title">Pending Expense Claims</span>
+                <button className="btn-link-sm" onClick={() => router.push('/admin/expenses')}>
+                  View all →
+                </button>
+              </div>
+              {recentExpenses.length > 0 ? (
+                <div className="admin-list">
+                  {recentExpenses.map((expense) => (
+                    <div key={expense.id || expense.expenseId} className="admin-list-item">
+                      <div className="admin-list-info">
+                        <span className="admin-list-name">{expense.employeeName}</span>
+                        <span className="admin-list-meta">
+                          {expense.category || expense.expenseType} &middot; ₹{expense.amount?.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                      <span className="status-badge status-pending">Pending</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-data">No pending expense claims.</p>
+              )}
+            </div>
+
+          </div>
+
+        </main>
       </div>
     </div>
   );

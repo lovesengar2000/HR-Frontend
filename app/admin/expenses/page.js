@@ -6,16 +6,31 @@ import Navbar from '../../../components/Navbar';
 import AdminSidebar from '../../../components/AdminSidebar';
 import '../../styles/dashboard.css';
 
-export default function AdminLeavesPage() {
+const CATEGORY_ICONS = {
+  Travel:        '✈️',
+  Food:          '🍽️',
+  Accommodation: '🏨',
+  Medical:       '🏥',
+  Equipment:     '🖥️',
+  Training:      '📚',
+  Other:         '📦',
+};
+
+function categoryIcon(cat) {
+  return CATEGORY_ICONS[cat] || '📦';
+}
+
+export default function AdminExpensesPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [employee, setEmployee] = useState(null);
-  const [leaves, setLeaves] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
-  const [rejectModal, setRejectModal] = useState(null); // { leaveId, reason }
+  const [rejectModal, setRejectModal] = useState(null); // { expenseId, reason }
+  const [detailModal, setDetailModal] = useState(null); // expense object
   const [message, setMessage] = useState({ text: '', type: '' });
 
   useEffect(() => { loadData(); }, []);
@@ -30,18 +45,18 @@ export default function AdminLeavesPage() {
       setUser(data.user);
       setEmployee(data.employee);
 
-      const leavesRes = await fetch(
-        `/api/admin/leaves?companyId=${data.user.companyId}`,
+      const expRes = await fetch(
+        `/api/admin/expenses?companyId=${data.user.companyId}`,
         { credentials: 'include' }
       );
-      if (leavesRes.ok) {
-        const leavesData = await leavesRes.json();
-        const arr = Array.isArray(leavesData) ? leavesData : leavesData.data || [];
-        setLeaves(arr);
+      if (expRes.ok) {
+        const expData = await expRes.json();
+        const arr = Array.isArray(expData) ? expData : expData.data || [];
+        setExpenses(arr);
       }
     } catch (err) {
-      console.error('Error loading leaves:', err);
-      setMessage({ text: 'Failed to load leave requests.', type: 'error' });
+      console.error('Error loading expenses:', err);
+      setMessage({ text: 'Failed to load expenses.', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -52,17 +67,17 @@ export default function AdminLeavesPage() {
     setTimeout(() => setMessage({ text: '', type: '' }), 3000);
   };
 
-  const handleApprove = async (leaveId) => {
-    setActionLoading(leaveId);
+  const handleApprove = async (expenseId) => {
+    setActionLoading(expenseId);
     try {
-      const res = await fetch('/api/admin/leaves/approve', {
+      const res = await fetch('/api/admin/expenses/approve', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leaveId, companyId: user.companyId }),
+        body: JSON.stringify({ expenseId, companyId: user.companyId }),
       });
-      if (res.ok) { flash('Leave approved.'); loadData(); }
-      else flash('Failed to approve leave.', 'error');
+      if (res.ok) { flash('Expense approved.'); loadData(); }
+      else flash('Failed to approve expense.', 'error');
     } catch (err) {
       flash('Error: ' + err.message, 'error');
     } finally {
@@ -72,20 +87,20 @@ export default function AdminLeavesPage() {
 
   const handleReject = async () => {
     if (!rejectModal) return;
-    setActionLoading(rejectModal.leaveId);
+    setActionLoading(rejectModal.expenseId);
     try {
-      const res = await fetch('/api/admin/leaves/reject', {
+      const res = await fetch('/api/admin/expenses/reject', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          leaveId: rejectModal.leaveId,
+          expenseId: rejectModal.expenseId,
           companyId: user.companyId,
           reason: rejectModal.reason || 'Rejected by admin',
         }),
       });
-      if (res.ok) { flash('Leave rejected.'); setRejectModal(null); loadData(); }
-      else flash('Failed to reject leave.', 'error');
+      if (res.ok) { flash('Expense rejected.'); setRejectModal(null); loadData(); }
+      else flash('Failed to reject expense.', 'error');
     } catch (err) {
       flash('Error: ' + err.message, 'error');
     } finally {
@@ -98,13 +113,17 @@ export default function AdminLeavesPage() {
     router.push('/');
   };
 
-  const count = (s) => leaves.filter((l) => l.status === s).length;
+  const count = (s) => expenses.filter((e) => e.status === s).length;
 
-  const filtered = leaves.filter((l) => {
-    const matchFilter = filter === 'all' || l.status === filter;
+  const totalPendingAmount = expenses
+    .filter((e) => e.status === 'PENDING')
+    .reduce((sum, e) => sum + (e.amount || 0), 0);
+
+  const filtered = expenses.filter((e) => {
+    const matchFilter = filter === 'all' || e.status === filter;
     const matchSearch = !search ||
-      (l.employeeName || '').toLowerCase().includes(search.toLowerCase()) ||
-      (l.leaveTypeName || '').toLowerCase().includes(search.toLowerCase());
+      (e.employeeName || '').toLowerCase().includes(search.toLowerCase()) ||
+      (e.category || e.expenseType || '').toLowerCase().includes(search.toLowerCase());
     return matchFilter && matchSearch;
   });
 
@@ -113,7 +132,7 @@ export default function AdminLeavesPage() {
       <div className="app-shell">
         <Navbar onLogout={handleLogout} />
         <div className="app-body">
-          <AdminSidebar activePath="/admin/leaves" />
+          <AdminSidebar activePath="/admin/expenses" />
           <main className="main-content">
             <div className="loading"><div className="spinner" /></div>
           </main>
@@ -132,15 +151,15 @@ export default function AdminLeavesPage() {
         userInitial={(emp.name || user?.email || 'A')[0].toUpperCase()}
       />
       <div className="app-body">
-        <AdminSidebar activePath="/admin/leaves" />
+        <AdminSidebar activePath="/admin/expenses" />
 
         <main className="main-content">
 
           {/* Header */}
           <div className="page-header">
             <div>
-              <h1 className="page-title">Leave Requests</h1>
-              <p className="page-subtitle">Review and manage all employee leave applications</p>
+              <h1 className="page-title">Expense Claims</h1>
+              <p className="page-subtitle">Review and approve employee expense requests</p>
             </div>
             <span className="admin-role-badge">ADMIN</span>
           </div>
@@ -154,8 +173,8 @@ export default function AdminLeavesPage() {
           {/* Stats */}
           <div className="stats-row">
             <div className="stat-tile">
-              <span className="stat-tile-label">Total</span>
-              <span className="stat-tile-value">{leaves.length}</span>
+              <span className="stat-tile-label">Total Claims</span>
+              <span className="stat-tile-value">{expenses.length}</span>
             </div>
             <div className="stat-tile">
               <span className="stat-tile-label">Pending</span>
@@ -169,6 +188,12 @@ export default function AdminLeavesPage() {
               <span className="stat-tile-label">Rejected</span>
               <span className="stat-tile-value stat-red">{count('REJECTED')}</span>
             </div>
+            <div className="stat-tile">
+              <span className="stat-tile-label">Pending Amount</span>
+              <span className="stat-tile-value stat-amber">
+                ₹{totalPendingAmount.toLocaleString('en-IN')}
+              </span>
+            </div>
           </div>
 
           {/* Table card */}
@@ -178,8 +203,8 @@ export default function AdminLeavesPage() {
             <div className="admin-filters-row" style={{ marginBottom: '0.75rem' }}>
               <div className="filter-tabs" style={{ margin: 0, flex: 1 }}>
                 {[
-                  { key: 'all', label: 'All', count: leaves.length },
-                  { key: 'PENDING', label: 'Pending', count: count('PENDING') },
+                  { key: 'all',      label: 'All',      count: expenses.length },
+                  { key: 'PENDING',  label: 'Pending',  count: count('PENDING') },
                   { key: 'APPROVED', label: 'Approved', count: count('APPROVED') },
                   { key: 'REJECTED', label: 'Rejected', count: count('REJECTED') },
                 ].map((t) => (
@@ -212,44 +237,55 @@ export default function AdminLeavesPage() {
                   <thead>
                     <tr>
                       <th>Employee</th>
-                      <th>Leave Type</th>
-                      <th>From</th>
-                      <th>To</th>
-                      <th>Days</th>
-                      <th>Reason</th>
+                      <th>Category</th>
+                      <th>Description</th>
+                      <th>Amount</th>
+                      <th>Date</th>
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((leave, i) => {
-                      const isPending = leave.status === 'PENDING';
-                      const isActioning = actionLoading === leave.id;
-                      const days = leave.startDate && leave.endDate
-                        ? Math.ceil((new Date(leave.endDate) - new Date(leave.startDate)) / 86400000) + 1
-                        : '—';
+                    {filtered.map((expense, i) => {
+                      const isPending = expense.status === 'PENDING';
+                      const isActioning = actionLoading === (expense.id || expense.expenseId);
                       const statusCls =
-                        leave.status === 'APPROVED' ? 'status-approved'
-                        : leave.status === 'REJECTED' ? 'status-rejected'
+                        expense.status === 'APPROVED' ? 'status-approved'
+                        : expense.status === 'REJECTED' ? 'status-rejected'
                         : 'status-pending';
+                      const expId = expense.id || expense.expenseId;
+                      const category = expense.category || expense.expenseType || 'Other';
                       return (
-                        <tr key={leave.id || i}>
-                          <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                            {leave.employeeName || '—'}
-                          </td>
-                          <td>{leave.leaveTypeName || '—'}</td>
-                          <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-                            {leave.startDate ? new Date(leave.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
-                          </td>
-                          <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-                            {leave.endDate ? new Date(leave.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
-                          </td>
-                          <td style={{ color: 'var(--text-secondary)' }}>{days}</td>
-                          <td style={{ maxWidth: 200, color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
-                            {leave.reason || '—'}
+                        <tr key={expId || i}>
+                          <td>
+                            <div className="admin-emp-cell">
+                              <div className="admin-emp-avatar">
+                                {(expense.employeeName || 'E')[0].toUpperCase()}
+                              </div>
+                              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                                {expense.employeeName || '—'}
+                              </span>
+                            </div>
                           </td>
                           <td>
-                            <span className={`status-badge ${statusCls}`}>{leave.status}</span>
+                            <div className="admin-emp-cell">
+                              <span>{categoryIcon(category)}</span>
+                              <span>{category}</span>
+                            </div>
+                          </td>
+                          <td style={{ maxWidth: 200, color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+                            {expense.description || expense.title || '—'}
+                          </td>
+                          <td style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                            ₹{(expense.amount || 0).toLocaleString('en-IN')}
+                          </td>
+                          <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                            {expense.date || expense.submittedAt
+                              ? new Date(expense.date || expense.submittedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                              : '—'}
+                          </td>
+                          <td>
+                            <span className={`status-badge ${statusCls}`}>{expense.status}</span>
                           </td>
                           <td>
                             {isPending && (
@@ -257,18 +293,23 @@ export default function AdminLeavesPage() {
                                 <button
                                   className="btn-approve"
                                   disabled={isActioning}
-                                  onClick={() => handleApprove(leave.id)}
+                                  onClick={() => handleApprove(expId)}
                                 >
                                   {isActioning ? '…' : 'Approve'}
                                 </button>
                                 <button
                                   className="btn-reject"
                                   disabled={isActioning}
-                                  onClick={() => setRejectModal({ leaveId: leave.id, reason: '' })}
+                                  onClick={() => setRejectModal({ expenseId: expId, reason: '' })}
                                 >
                                   Reject
                                 </button>
                               </div>
+                            )}
+                            {expense.status === 'REJECTED' && expense.adminNote && (
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                {expense.adminNote}
+                              </span>
                             )}
                           </td>
                         </tr>
@@ -278,7 +319,9 @@ export default function AdminLeavesPage() {
                 </table>
               </div>
             ) : (
-              <p className="no-data">No {filter !== 'all' ? filter.toLowerCase() : ''} leave requests found.</p>
+              <p className="no-data">
+                No {filter !== 'all' ? filter.toLowerCase() : ''} expense claims found.
+              </p>
             )}
           </div>
 
@@ -286,8 +329,8 @@ export default function AdminLeavesPage() {
           {rejectModal && (
             <div className="modal-overlay" onClick={() => setRejectModal(null)}>
               <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-                <h3 className="modal-title">Reject Leave</h3>
-                <p className="modal-subtitle">Provide a reason for rejecting this leave request.</p>
+                <h3 className="modal-title">Reject Expense</h3>
+                <p className="modal-subtitle">Provide a reason for rejecting this expense claim.</p>
                 <textarea
                   className="form-control"
                   rows="3"
@@ -299,10 +342,10 @@ export default function AdminLeavesPage() {
                 <div className="modal-actions">
                   <button
                     className="btn-reject"
-                    disabled={actionLoading === rejectModal.leaveId}
+                    disabled={actionLoading === rejectModal.expenseId}
                     onClick={handleReject}
                   >
-                    {actionLoading === rejectModal.leaveId ? 'Rejecting…' : 'Confirm Reject'}
+                    {actionLoading === rejectModal.expenseId ? 'Rejecting…' : 'Confirm Reject'}
                   </button>
                   <button className="btn btn-ghost" onClick={() => setRejectModal(null)}>
                     Cancel

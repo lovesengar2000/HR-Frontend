@@ -172,7 +172,7 @@ export default function AdminUsersPage() {
     setEditForm({
       name:          (emp.firstName + ' ' + emp.lastName)          || '',
       email:         emp.email         || '',
-      department:    emp.department    || '',
+      department:    emp.departmentName    || '',
       designation:   emp.designation   || emp.jobTitle || '',
       role:          emp.role          || 'EMPLOYEE',
       phone:         emp.phoneMobile   || '',
@@ -359,7 +359,7 @@ export default function AdminUsersPage() {
                           </div>
                         </td>
                         <td>{emp.email || '—'}</td>
-                        <td>{emp.department || '—'}</td>
+                        <td>{emp.departmentName || '—'}</td>
                         <td>{emp.designation || emp.jobTitle || '—'}</td>
                         <td><span className="admin-role-chip">{emp.role || 'EMPLOYEE'}</span></td>
                         <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>

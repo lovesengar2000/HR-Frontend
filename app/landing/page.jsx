@@ -11,7 +11,7 @@ function DashboardMockup() {
         <span className="lp-mock-dot" />
         <span className="lp-mock-dot" />
         <span className="lp-mock-dot" />
-        <span className="lp-mock-topbar-title">HRMatrix — Dashboard</span>
+        <span className="lp-mock-topbar-title">HRM — Dashboard</span>
       </div>
       {/* App body */}
       <div className="lp-mock-body">
@@ -146,7 +146,7 @@ const FAQ_PREVIEW = [
   },
   {
     q: 'Does it integrate with our existing payroll software?',
-    a: 'HRMatrix handles payroll natively, but we also provide export-ready formats compatible with major accounting and payroll tools.',
+    a: 'HRM handles payroll natively, but we also provide export-ready formats compatible with major accounting and payroll tools.',
   },
 ];
 
@@ -159,7 +159,7 @@ export default function LandingPage() {
       {/* ── NAV ──────────────────────────────────────────────── */}
       <nav className="lp-nav">
         <div className="lp-nav-inner">
-          <a href="#hero" className="lp-logo">HRMatrix</a>
+          <a href="#hero" className="lp-logo">HRM</a>
 
           <ul className="lp-nav-links">
             <li><a href="#features">Features</a></li>
@@ -193,7 +193,7 @@ export default function LandingPage() {
           </h1>
 
           <p>
-            HRMatrix brings payroll, leave, attendance, assets, performance, and engagement
+            HRM brings payroll, leave, attendance, assets, performance, and engagement
             into one platform — eliminating manual work and giving every HR team superpowers.
           </p>
 
@@ -210,7 +210,7 @@ export default function LandingPage() {
             <div className="lp-hero-avatars">
               {['PK','NR','AS','MG','TR'].map(i => <span key={i}>{i}</span>)}
             </div>
-            <span>Join 500+ HR teams already using HRMatrix</span>
+            <span>Join 500+ HR teams already using HRM</span>
           </div>
 
           <DashboardMockup />
@@ -267,7 +267,7 @@ export default function LandingPage() {
             {/* Right — solution */}
             <div>
               <span className="lp-tag">The Solution</span>
-              <p className="lp-solution-title">HRMatrix Unifies Everything in One Place</p>
+              <p className="lp-solution-title">HRM Unifies Everything in One Place</p>
               <ul className="lp-solution-list">
                 {[
                   { icon: '✅', title: 'Automated Payroll', desc: 'Zero-error payroll with auto tax calculations and one-click disbursement.' },
@@ -358,7 +358,7 @@ export default function LandingPage() {
           <div className="lp-testimonials-header">
             <span className="lp-tag">Customer Stories</span>
             <h2>Loved by HR Teams Across India</h2>
-            <p>Real results from real companies who switched to HRMatrix.</p>
+            <p>Real results from real companies who switched to HRM.</p>
           </div>
           <div className="lp-testimonials-grid">
             {TESTIMONIALS.map(({ text, name, role, initials }) => (
@@ -446,7 +446,7 @@ export default function LandingPage() {
               <ul className="lp-pricing-features">
                 {['Everything in Growth', 'Unlimited employees', 'Custom integrations', 'Dedicated onboarding', 'SLA & uptime guarantee', '24/7 dedicated support'].map(f => <li key={f}>{f}</li>)}
               </ul>
-              <a href="mailto:sales@hrmatrix.in" className="lp-pricing-cta lp-pricing-cta-default">Contact Sales</a>
+              <a href="mailto:sales@HRM.in" className="lp-pricing-cta lp-pricing-cta-default">Contact Sales</a>
             </div>
           </div>
           <p className="lp-pricing-note">All plans include a 14-day free trial. No credit card required to start.</p>
@@ -480,13 +480,13 @@ export default function LandingPage() {
         <h2>Ready to Transform Your HR?</h2>
         <p>
           Join 500+ companies that have replaced spreadsheets and email chaos
-          with HRMatrix — the HR platform built for how modern teams actually work.
+          with HRM — the HR platform built for how modern teams actually work.
         </p>
         <div className="lp-final-cta-btns">
           <Link href="/register" className="lp-btn lp-btn-primary lp-btn-xl">
             Start Your Free Trial
           </Link>
-          <a href="mailto:sales@hrmatrix.in" className="lp-btn lp-btn-ghost lp-btn-xl">
+          <a href="mailto:sales@HRM.in" className="lp-btn lp-btn-ghost lp-btn-xl">
             Talk to Sales
           </a>
         </div>
@@ -498,7 +498,7 @@ export default function LandingPage() {
         <div className="lp-footer-inner">
           <div className="lp-footer-top">
             <div className="lp-footer-brand">
-              <span className="lp-footer-brand-name">HRMatrix</span>
+              <span className="lp-footer-brand-name">HRM</span>
               <p>The all-in-one HR platform helping modern companies hire, manage, pay, and grow their teams — all from one place.</p>
               <div className="lp-footer-socials">
                 {[['🐦', '#'], ['💼', '#'], ['📘', '#']].map(([icon, href], i) => (
@@ -536,7 +536,7 @@ export default function LandingPage() {
           </div>
 
           <div className="lp-footer-bottom">
-            <p className="lp-footer-copy">© {new Date().getFullYear()} HRMatrix. All rights reserved.</p>
+            <p className="lp-footer-copy">© {new Date().getFullYear()} HRM. All rights reserved.</p>
             <div className="lp-footer-links">
               <a href="#">Privacy</a>
               <a href="#">Terms</a>

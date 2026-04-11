@@ -14,12 +14,12 @@ const FAQ_CATEGORIES = [
     desc: 'Everything you need to know before and during onboarding.',
     questions: [
       {
-        q: 'How long does it take to set up HRMatrix?',
+        q: 'How long does it take to set up HRM?',
         a: `Most companies are fully operational within a single working day. Our guided setup wizard walks you through company configuration, department structure, leave policies, and payroll setup step by step. If you're importing employees via CSV, that process takes minutes, not hours.`,
       },
       {
         q: 'Do I need technical expertise to get started?',
-        a: `No technical background is needed. HRMatrix is designed for HR professionals, not developers. Our intuitive interface, guided setup, and in-app help documentation mean you can configure everything yourself. If you ever get stuck, our support team is ready to help.`,
+        a: `No technical background is needed. HRM is designed for HR professionals, not developers. Our intuitive interface, guided setup, and in-app help documentation mean you can configure everything yourself. If you ever get stuck, our support team is ready to help.`,
       },
       {
         q: 'Can I import our existing employee data?',
@@ -42,8 +42,8 @@ const FAQ_CATEGORIES = [
     desc: 'Questions about salary processing, tax calculations, and payslips.',
     questions: [
       {
-        q: 'Does HRMatrix handle TDS and tax calculations automatically?',
-        a: `Yes. HRMatrix automatically calculates TDS (Tax Deducted at Source) based on each employee's salary components, investment declarations, and applicable tax slab. Calculations follow the latest Income Tax rules and are updated whenever there are budget-related changes. You can review the breakdown for every employee before processing payroll.`,
+        q: 'Does HRM handle TDS and tax calculations automatically?',
+        a: `Yes. HRM automatically calculates TDS (Tax Deducted at Source) based on each employee's salary components, investment declarations, and applicable tax slab. Calculations follow the latest Income Tax rules and are updated whenever there are budget-related changes. You can review the breakdown for every employee before processing payroll.`,
       },
       {
         q: 'Can we customize salary components (HRA, allowances, bonuses)?',
@@ -54,12 +54,12 @@ const FAQ_CATEGORIES = [
         a: `Payslips are generated automatically when payroll is processed. Employees can log in and download their payslips from the "My Finances" section at any time. Admins can also bulk-download payslips as PDFs or trigger email delivery to all employees with a single click.`,
       },
       {
-        q: 'Does HRMatrix support arrears, bonuses, and one-time payments?',
+        q: 'Does HRM support arrears, bonuses, and one-time payments?',
         a: `Yes. You can add ad-hoc earnings or deductions to any pay cycle — arrears, performance bonuses, loan EMI deductions, or any one-time adjustment. These are included in the payslip with their own line items so employees can see the breakdown clearly.`,
       },
       {
         q: 'Can we process payroll for employees on different pay cycles?',
-        a: `Currently HRMatrix supports monthly pay cycles (standard in India). Support for bi-monthly and weekly cycles is on our roadmap. Enterprise customers can contact us to discuss custom arrangements.`,
+        a: `Currently HRM supports monthly pay cycles (standard in India). Support for bi-monthly and weekly cycles is on our roadmap. Enterprise customers can contact us to discuss custom arrangements.`,
       },
     ],
   },
@@ -79,11 +79,11 @@ const FAQ_CATEGORIES = [
       },
       {
         q: 'Can employees check their leave balance without contacting HR?',
-        a: `Absolutely — that's one of the core benefits. Employees can see their current balance for every leave type, their full application history with status, and upcoming approved leaves — all from the "Me → Leave" section. HR teams report an 80% reduction in leave-related queries after switching to HRMatrix.`,
+        a: `Absolutely — that's one of the core benefits. Employees can see their current balance for every leave type, their full application history with status, and upcoming approved leaves — all from the "Me → Leave" section. HR teams report an 80% reduction in leave-related queries after switching to HRM.`,
       },
       {
         q: 'How does carry-forward work at year end?',
-        a: `You define the carry-forward rules per leave type — maximum days allowed to carry over, expiry date for carried-over leaves, and encashment policies. HRMatrix runs the year-end carryover process automatically on the date you specify. The system generates a report of all carryover actions for your records.`,
+        a: `You define the carry-forward rules per leave type — maximum days allowed to carry over, expiry date for carried-over leaves, and encashment policies. HRM runs the year-end carryover process automatically on the date you specify. The system generates a report of all carryover actions for your records.`,
       },
       {
         q: 'Does the system handle half-day and hourly leave applications?',
@@ -99,7 +99,7 @@ const FAQ_CATEGORIES = [
     questions: [
       {
         q: 'How does the OKR module work?',
-        a: `HRMatrix lets you set objectives at three levels: company-wide, team, and individual. Each objective has key results with measurable targets. Employees update progress on their key results regularly, and managers can see real-time alignment between individual goals and company objectives. This data feeds directly into performance reviews.`,
+        a: `HRM lets you set objectives at three levels: company-wide, team, and individual. Each objective has key results with measurable targets. Employees update progress on their key results regularly, and managers can see real-time alignment between individual goals and company objectives. This data feeds directly into performance reviews.`,
       },
       {
         q: 'Can managers schedule structured one-on-one meetings?',
@@ -130,8 +130,8 @@ const FAQ_CATEGORIES = [
         a: `Role-based access control (RBAC) ensures that only authorized users see sensitive data. Employees only see their own salary and personal data. Managers can see their team's attendance and leave (not salaries, unless granted access). HR admins and finance roles have appropriate access as configured by your super admin.`,
       },
       {
-        q: 'Is HRMatrix compliant with Indian labor laws?',
-        a: `HRMatrix is built with Indian compliance in mind — PF (Provident Fund), ESI, professional tax, and TDS calculations follow applicable statutory rules. We update the platform when regulations change. That said, we recommend your team verify compliance requirements specific to your state and industry as laws can vary.`,
+        q: 'Is HRM compliant with Indian labor laws?',
+        a: `HRM is built with Indian compliance in mind — PF (Provident Fund), ESI, professional tax, and TDS calculations follow applicable statutory rules. We update the platform when regulations change. That said, we recommend your team verify compliance requirements specific to your state and industry as laws can vary.`,
       },
       {
         q: 'What happens if there is a data breach?',
@@ -216,7 +216,7 @@ export default function FaqPage() {
       {/* ── NAV ──────────────────────────────────────────────── */}
       <nav className="faq-nav">
         <div className="faq-nav-inner">
-          <Link href="/landing" className="faq-nav-logo">HRMatrix</Link>
+          <Link href="/landing" className="faq-nav-logo">HRM</Link>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
             <Link href="/landing" className="faq-nav-back">← Back to Home</Link>
             <Link href="/register" className="faq-nav-cta">Start Free Trial</Link>
@@ -230,8 +230,8 @@ export default function FaqPage() {
           <span className="faq-tag">Help Center</span>
           <h1>Frequently Asked Questions</h1>
           <p>
-            Everything you need to know about HRMatrix. Can't find what you're looking for?{' '}
-            <a href="mailto:support@hrmatrix.in" className="faq-answer-link">Talk to our team.</a>
+            Everything you need to know about HRM. Can't find what you're looking for?{' '}
+            <a href="mailto:support@HRM.in" className="faq-answer-link">Talk to our team.</a>
           </p>
           <div className="faq-search-wrap">
             <input
@@ -287,7 +287,7 @@ export default function FaqPage() {
             <div style={{ textAlign: 'center', padding: '60px 0', color: '#aaa' }}>
               <p style={{ fontSize: '2rem', marginBottom: 12 }}>🔍</p>
               <p style={{ fontSize: '1rem', marginBottom: 8, color: '#555', fontWeight: 600 }}>No results found</p>
-              <p style={{ fontSize: '0.88rem' }}>Try different keywords, or <a href="mailto:support@hrmatrix.in" className="faq-answer-link">contact our support team</a>.</p>
+              <p style={{ fontSize: '0.88rem' }}>Try different keywords, or <a href="mailto:support@HRM.in" className="faq-answer-link">contact our support team</a>.</p>
             </div>
           ) : (
             visibleCategories.map(({ id, icon, title, desc, questions }) => (
@@ -320,20 +320,20 @@ export default function FaqPage() {
             Most queries are resolved within 2 hours.
           </p>
           <div className="faq-contact-options">
-            <a href="mailto:support@hrmatrix.in" className="faq-contact-card">
+            <a href="mailto:support@HRM.in" className="faq-contact-card">
               <div className="faq-contact-card-icon">📧</div>
               <h4>Email Support</h4>
-              <p>support@hrmatrix.in<br />Reply within 2 hours</p>
+              <p>support@HRM.in<br />Reply within 2 hours</p>
             </a>
             <a href="#" className="faq-contact-card">
               <div className="faq-contact-card-icon">💬</div>
               <h4>Live Chat</h4>
               <p>Chat with us directly<br />Mon–Sat, 9 AM–7 PM IST</p>
             </a>
-            <a href="mailto:sales@hrmatrix.in" className="faq-contact-card">
+            <a href="mailto:sales@HRM.in" className="faq-contact-card">
               <div className="faq-contact-card-icon">📞</div>
               <h4>Talk to Sales</h4>
-              <p>sales@hrmatrix.in<br />Enterprise & custom plans</p>
+              <p>sales@HRM.in<br />Enterprise & custom plans</p>
             </a>
           </div>
         </div>
@@ -342,7 +342,7 @@ export default function FaqPage() {
       {/* ── FOOTER ───────────────────────────────────────────── */}
       <footer className="faq-footer">
         <p>
-          © {new Date().getFullYear()} HRMatrix · <a href="/landing">Home</a> · <a href="mailto:support@hrmatrix.in">Support</a> · <a href="#">Privacy Policy</a>
+          © {new Date().getFullYear()} HRM · <a href="/landing">Home</a> · <a href="mailto:support@HRM.in">Support</a> · <a href="#">Privacy Policy</a>
         </p>
       </footer>
     </div>

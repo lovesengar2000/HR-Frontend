@@ -120,7 +120,7 @@ export default function RegisterPage() {
       <div className={style.Card}>
         {/* Header */}
         <div className={style.CardHeader}>
-          <div className={style.Logo}>HRMatrix</div>
+          <div className={style.Logo}>HRM</div>
           <div className={style.Tagline}>Create your company account — free for 14 days</div>
         </div>
 

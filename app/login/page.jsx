@@ -130,7 +130,7 @@ export default function LoginPage() {
       <div className={style.Card}>
         {/* Header */}
         <div className={style.CardHeader}>
-          <div className={style.Logo}>HRMatrix</div>
+          <div className={style.Logo}>HRM</div>
           <div className={style.Tagline}>Welcome back — sign in to your workspace</div>
         </div>
 

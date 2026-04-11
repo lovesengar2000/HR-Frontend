@@ -76,7 +76,7 @@ export default function LoginPage() {
         res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/registerEmployee`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, otpCode: otp }),
+          body: JSON.stringify({ email, password, OTPCode: otp }),
         });
         data = await res.json();
         if (res.ok) {

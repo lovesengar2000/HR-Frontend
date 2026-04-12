@@ -3281,53 +3281,190 @@ tbody tr:hover td {
   }
 }
 
+/* ============================================================
+   Navbar — Hamburger button (hidden on desktop)
+   ============================================================ */
+
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 38px;
+  height: 38px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm, 6px);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.nav-hamburger:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.nav-hamburger-bar {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--text-secondary);
+  border-radius: 2px;
+  transition: transform 0.22s ease, opacity 0.22s ease, width 0.22s ease;
+  transform-origin: center;
+}
+
+/* Animated X state */
+.nav-hamburger-bar:nth-child(1).open { transform: translateY(7px) rotate(45deg); }
+.nav-hamburger-bar:nth-child(2).open { opacity: 0; transform: scaleX(0); }
+.nav-hamburger-bar:nth-child(3).open { transform: translateY(-7px) rotate(-45deg); }
+
+/* ============================================================
+   Mobile overlay (behind the drawer)
+   ============================================================ */
+
+.mobile-nav-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 149;
+  backdrop-filter: blur(1px);
+  animation: overlayFadeIn 0.2s ease;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ============================================================
+   Mobile breakpoint — 768px
+   ============================================================ */
+
 @media (max-width: 768px) {
+
+  /* Show hamburger */
+  .nav-hamburger { display: flex; }
+
+  /* Shrink brand area so it fits alongside hamburger */
+  .nav-brand {
+    width: auto;
+    flex: 1;
+  }
+
+  /* Hide search bar */
+  .nav-search { display: none; }
+
+  /* Collapse username to just the avatar on small screens */
+  .nav-username        { display: none; }
+  .nav-profile-chevron { display: none; }
+
+  /* Hide help button on very small screens */
+  .nav-icon-btn--hide-xs { display: none; }
+
+  /* Profile dropdown anchors to right edge on mobile */
+  .nav-profile-menu {
+    right: 0;
+    left: auto;
+    min-width: 220px;
+  }
+
+  /* ── Sidebar becomes a slide-in drawer ── */
+
   .app-body {
-    flex-direction: column;
+    /* No longer stack vertically — main content fills the space */
+    flex-direction: row;
   }
 
   .sidebar {
-    width: 100%;
-    height: auto;
-    position: static;
-    flex-direction: row;
-    overflow-x: auto;
+    position: fixed;
+    top: var(--navbar-height, 56px);
+    left: 0;
+    width: 260px;
+    height: calc(100dvh - var(--navbar-height, 56px));
+    z-index: 150;
+    overflow-y: auto;
+    overflow-x: hidden;
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
+    flex-direction: column;
   }
 
-  .sidebar-nav {
-    width: 100%;
+  /* Open state — driven by body class set in Navbar.jsx */
+  body.mobile-nav-open .sidebar {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
   }
 
+  body.mobile-nav-open .mobile-nav-overlay {
+    display: block;
+  }
+
+  /* Reset mobile horizontal scrolling overrides from old CSS */
+  .sidebar-nav  { width: 100%; }
   .sidebar-menu {
-    flex-direction: row;
+    flex-direction: column;
     flex-wrap: nowrap;
-    overflow-x: auto;
-    gap: 4px;
+    overflow-x: visible;
+    gap: 2px;
   }
-
   .sidebar-item {
-    white-space: nowrap;
-    flex-shrink: 0;
+    white-space: normal;
+    flex-shrink: 1;
   }
 
-  .card-grid-3 {
-    grid-template-columns: 1fr;
-  }
+  /* Main content fills full width */
+  .main-content { padding: 1rem; }
 
-  .leave-quota-row {
+  /* Other layout fixes */
+  .card-grid-3       { grid-template-columns: 1fr; }
+  .leave-quota-row   { flex-wrap: wrap; }
+  .docs-type-grid    { grid-template-columns: 1fr; }
+
+  /* Page header stacks on small screens */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .page-header > div:last-child {
+    width: 100%;
     flex-wrap: wrap;
   }
 
-  .nav-search {
-    display: none;
+  /* Stats row wraps */
+  .stats-row {
+    flex-wrap: wrap;
+  }
+  .stat-tile {
+    flex: 1 1 calc(50% - 0.5rem);
+    min-width: 120px;
   }
 
-  .main-content {
-    padding: 1rem;
-  }
-
-  .docs-type-grid {
+  /* Forms stack to single column */
+  .form-row-2 {
     grid-template-columns: 1fr;
+  }
+
+  /* Tables scroll horizontally */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Modals take full width on mobile */
+  .modal-card {
+    width: calc(100vw - 2rem);
+    max-width: 100%;
+    margin: 1rem;
+  }
+  .modal-large {
+    width: calc(100vw - 2rem);
+    max-width: 100%;
   }
 }
 

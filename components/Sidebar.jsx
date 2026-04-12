@@ -66,6 +66,13 @@ export default function Sidebar({ activePath = '' }) {
                 >
                   Assets
                 </li>
+                <li
+                  className={`sidebar-subitem ${activePath === '/me/resign' ? 'active' : ''}`}
+                  onClick={() => router.push('/me/resign')}
+                  style={{ color: 'var(--red, #e05252)' }}
+                >
+                  Resign
+                </li>
               </ul>
             )}
           </li>

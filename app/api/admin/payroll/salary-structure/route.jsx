@@ -1,0 +1,53 @@
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const companyId = searchParams.get('companyId');
+  const token     = request.cookies.get('authToken')?.value;
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/payroll/salary-structure?companyId=${companyId}`,
+      { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } }
+    );
+    const data = await response.json();
+    return Response.json(data, { status: response.status });
+  } catch {
+    return Response.json({ error: 'Failed to fetch salary structures' }, { status: 500 });
+  }
+}
+
+export async function POST(request) {
+  const token = request.cookies.get('authToken')?.value;
+  const body  = await request.json();
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/payroll/salary-structure`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      }
+    );
+    const data = await response.json();
+    return Response.json(data, { status: response.status });
+  } catch {
+    return Response.json({ error: 'Failed to create salary structure' }, { status: 500 });
+  }
+}
+
+export async function PUT(request) {
+  const token = request.cookies.get('authToken')?.value;
+  const body  = await request.json();
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/payroll/salary-structure`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      }
+    );
+    const data = await response.json();
+    return Response.json(data, { status: response.status });
+  } catch {
+    return Response.json({ error: 'Failed to update salary structure' }, { status: 500 });
+  }
+}

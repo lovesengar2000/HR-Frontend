@@ -2,12 +2,12 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const companyId  = searchParams.get("companyId");
   const employeeId = searchParams.get("employeeId");
-  const managerId  = searchParams.get("managerId");
+  const managerEmployeeId  = searchParams.get("managerEmployeeId");
   const token = request.cookies.get("authToken")?.value;
 
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/myteam?companyId=${companyId}&employeeId=${employeeId}&managerId=${managerId}`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/myteam?companyId=${companyId}&employeeId=${employeeId}&managerEmployeeId=${managerEmployeeId}`,
       {
         method: "GET",
         headers: {

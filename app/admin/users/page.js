@@ -166,21 +166,6 @@ export default function AdminUsersPage() {
     }
   };
 
-  // ── Open Edit Modal ───────────────────────────────────────────
-  const openEdit = (emp) => {
-    setEditTarget(emp);
-    setEditForm({
-      name:          (emp.firstName + ' ' + emp.lastName)          || '',
-      email:         emp.email         || '',
-      department:    emp.departmentName    || '',
-      designation:   emp.designation   || emp.jobTitle || '',
-      role:          emp.role          || 'EMPLOYEE',
-      phone:         emp.phoneMobile   || '',
-      dateOfJoining: emp.dateOfJoining || emp.createdAt?.split('T')[0] || '',
-      status:        emp.status        || 'ACTIVE',
-    });
-  };
-
   // ── Save Edits ────────────────────────────────────────────────
   const handleEdit = async (e) => {
     e.preventDefault();
@@ -373,7 +358,7 @@ export default function AdminUsersPage() {
                           </span>
                         </td>
                         <td>
-                          <button className="btn-table-edit" onClick={() => openEdit(emp)}>
+                          <button className="btn-table-edit" onClick={() => router.push(`/admin/users/${emp.id || emp.employeeId}`)}>
                             ✏ Edit
                           </button>
                         </td>

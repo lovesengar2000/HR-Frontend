@@ -121,7 +121,7 @@ export default function MyTeamPage() {
       setEmployee(data.employee);
 
       const teamRes = await fetch(
-        `/api/my-team?companyId=${data.user.companyId}&employeeId=${data.employee?.employeeId}&managerId=${data.employee?.managerId || ""}`,
+        `/api/my-team?companyId=${data.user.companyId}&employeeId=${data.employee?.employeeId}&managerEmployeeId=${data.employee?.managerEmployeeId || ""}`,
         { method: "GET", credentials: "include" }
       );
       if (teamRes.ok) {

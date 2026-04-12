@@ -109,9 +109,9 @@ export default function ProfilePage() {
             <div className="HRM-card-header">
               <span className="HRM-card-title">Personal Information</span>
             </div>
-            <InfoRow label="Full Name"     value={emp.name} />
+            <InfoRow label="Full Name"     value={emp.firstName + " " + emp.lastName} />
             <InfoRow label="Email"         value={user?.email} />
-            <InfoRow label="Phone"         value={emp.phone} />
+            <InfoRow label="Phone"         value={emp.phoneMobile } />
             <InfoRow label="Date of Birth" value={emp.dateOfBirth ? new Date(emp.dateOfBirth).toLocaleDateString("en-IN") : null} />
             <InfoRow label="Gender"        value={emp.gender} />
             <InfoRow label="Address"       value={emp.address} />

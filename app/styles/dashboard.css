@@ -59,7 +59,10 @@ body {
 .app-body {
   display: flex;
   flex: 1;
-  overflow: hidden;
+  /* clip visually without creating a scroll container —
+     lets child overflow-auto elements scroll inside themselves */
+  overflow: clip;
+  min-height: 0;
 }
 
 /* ============================================================
@@ -514,7 +517,10 @@ body {
 
 .main-content {
   flex: 1;
+  min-width: 0;           /* prevent flex blowout */
+  min-height: 0;          /* allow children to use flex shrink */
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
@@ -2214,133 +2220,320 @@ tbody tr:hover td {
 }
 
 /* ============================================================
-   Organization Chart
+   Organization Chart — Top-Down Tree
    ============================================================ */
 
-.org-chart-card {
-  padding: 1.5rem;
-  overflow-x: auto;
-}
-
-.org-chart-container {
-  padding: 1rem 0;
-  min-width: min-content;
-}
-
-.org-node-wrapper {
-  margin-bottom: 1.5rem;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.org-node {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
+/* ── Outer card that scrolls in BOTH directions ── */
+.org-chart-scroll-wrap {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
-  min-width: 280px;
+  border-radius: var(--radius);
+  /* Fill remaining height of main-content, then scroll */
+  flex: 1;
+  min-height: 0;          /* crucial: lets flex child shrink below content height */
+  overflow: auto;
+  padding: 2rem 1.5rem;
+  /* Smooth inertia scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
 }
 
-.org-node:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--accent);
-  box-shadow: 0 0 12px rgba(91, 141, 238, 0.15);
-}
-
-.org-node-avatar {
+/* Inner tree — never wraps, drives the scroll width */
+.org-chart-root {
   display: flex;
-  align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, var(--accent), #a855f7);
-  border-radius: 50%;
-  color: white;
-  font-weight: 600;
-  font-size: 14px;
-  flex-shrink: 0;
+  /* Tree can be as wide as it needs; wrapper scrolls */
+  min-width: max-content;
+  padding: 0.5rem 2rem 1.5rem;
 }
 
-.org-node-info {
+/* ── Branch: one node + its children below it ── */
+.org-branch {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  flex: 1;
+  align-items: center;
 }
 
-.org-node-name {
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 14px;
+/* ── Card wrapper: card + expand toggle together ── */
+.org-card-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.org-node-title {
-  font-size: 12px;
-  color: var(--accent);
-}
-
-.org-node-dept {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.org-node-expand {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  background: rgba(91, 141, 238, 0.1);
-  border: 1px solid var(--accent);
-  border-radius: 4px;
-  color: var(--accent);
+/* ── The node card ── */
+.org-card {
+  width: 148px;
+  padding: 0.85rem 0.75rem 0.7rem;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.12s;
+  text-align: center;
+  user-select: none;
+  position: relative;
+}
+
+.org-card:hover {
+  border-color: var(--node-color, var(--accent));
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22),
+              0 0 0 3px color-mix(in srgb, var(--node-color, var(--accent)) 15%, transparent);
+  transform: translateY(-2px);
+}
+
+/* Coloured top bar on each card */
+.org-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--node-color, var(--accent));
+  border-radius: 12px 12px 0 0;
+}
+
+.org-card-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0 auto 0.55rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
 }
 
-.org-node-expand:hover {
+.org-card-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+  display: block;
+  word-break: break-word;
+}
+
+.org-card-title {
+  font-size: 0.7rem;
+  color: var(--node-color, var(--accent));
+  margin-top: 0.2rem;
+  display: block;
+  word-break: break-word;
+}
+
+.org-card-dept {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+  display: block;
+}
+
+.org-card-reports {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+}
+
+/* ── Expand / collapse button ── */
+.org-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-sidebar);
+  border: 2px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+  margin-top: 3px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.org-toggle-btn:hover {
   background: var(--accent);
-  color: white;
+  border-color: var(--accent);
+  color: #fff;
 }
 
-.org-children {
-  margin-left: 2rem;
-  margin-top: 0.75rem;
-  padding-left: 1rem;
-  border-left: 2px solid var(--border);
+/* ── Vertical line: from card/toggle down to horizontal bar ── */
+.org-v-line {
+  width: 2px;
+  height: 24px;
+  background: var(--border);
+  flex-shrink: 0;
 }
 
-.org-child-branch {
-  margin-bottom: 0.5rem;
+/* ── Children row: horizontal flex of all direct-report branches ── */
+.org-children-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  position: relative;
 }
 
+/*
+  Horizontal connector line that spans across all child slots.
+  Drawn by ::before on the row.
+  left/right stop at 50% of the first/last slot — but since we can't
+  know exact widths, we use the slot ::after trick instead (see below).
+*/
+
+/* ── Each slot in the children row ── */
+.org-child-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 0 10px;  /* horizontal gap between sibling branches */
+}
+
+/*
+  Vertical line from the horizontal bar down to this branch's card.
+  Height matches .org-slot-v-line height below.
+*/
+.org-child-slot::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 24px;
+  background: var(--border);
+  z-index: 0;
+}
+
+/*
+  Horizontal connector: each slot contributes the segment running
+  from its own centre to its neighbour's centre.
+  - first child  → only the RIGHT half (centre → right edge)
+  - last child   → only the LEFT  half (left edge → centre)
+  - middle child → full width          (left edge → right edge)
+  - only child   → hidden
+*/
+.org-child-slot::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--border);
+}
+.org-child-slot:first-child::after { left: 50%; }
+.org-child-slot:last-child::after  { right: 50%; }
+.org-child-slot:only-child::after  { display: none; }
+/* Also hide the vertical line for a single child (only-child gets a
+   straight line from parent's org-v-line directly) */
+.org-child-slot:only-child::before {
+  /* Keep it — the vertical line still connects org-v-line to the card */
+}
+
+/* The explicit vertical line element inside each slot */
+.org-slot-v-line {
+  width: 2px;
+  height: 24px;
+  background: transparent; /* drawn by ::before pseudo-element above */
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+/* ── Empty state ── */
 .org-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 200px;
-  gap: 1rem;
+  min-height: 220px;
+  gap: 0.75rem;
   color: var(--text-muted);
 }
 
-.org-empty span {
-  font-size: 48px;
+/* ── Legend ── */
+.org-legend {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: var(--surface-secondary, var(--bg-card));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: fit-content;
 }
 
-.org-empty p {
-  font-size: 14px;
+.org-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.org-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Search dropdown ── */
+.org-search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  z-index: 80;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.org-search-result {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.6rem 0.9rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+  border-bottom: 1px solid var(--border);
+}
+.org-search-result:last-child { border-bottom: none; }
+.org-search-result:hover      { background: rgba(255, 255, 255, 0.05); }
+
+.org-search-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
 }
 
 /* Member Detail Modal */
@@ -3717,6 +3910,10 @@ tbody tr:hover td {
   width: 100%;
   max-width: 440px;
   box-shadow: var(--shadow-lg);
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-title {

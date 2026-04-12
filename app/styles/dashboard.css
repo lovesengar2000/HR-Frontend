@@ -4409,3 +4409,49 @@ tbody tr:hover td {
   font-weight: 700;
   flex-shrink: 0;
 }
+
+/* ============================================================
+   Attendance — Clock In / Out action buttons
+   ============================================================ */
+
+.attn-action-btn {
+  display: block;
+  width: 100%;
+  margin-top: 1.25rem;
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.attn-action-btn:active  { transform: scale(0.98); }
+.attn-action-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.attn-clockin-btn {
+  background: var(--accent);
+  color: #fff;
+}
+
+.attn-clockout-btn {
+  background: #ef4444;
+  color: #fff;
+}
+
+.attn-done-note {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Expanded session sub-rows in attendance table */
+.attn-session-row td {
+  background: var(--surface-secondary);
+  border-top: none !important;
+  padding-top: 0.3rem !important;
+  padding-bottom: 0.3rem !important;
+}
